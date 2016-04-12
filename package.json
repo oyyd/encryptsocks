@@ -17,6 +17,10 @@
     "eslint": "^2.7.0",
     "eslint-config-airbnb": "^6.2.0",
     "mocha": "^2.4.5",
-    "socks5-http-client": "^1.0.2"
+    "socks5-http-client": "^1.0.2",
+    "socks5-https-client": "^1.1.2"
+  },
+  "dependencies": {
+    "winston": "^2.2.0"
   }
 }

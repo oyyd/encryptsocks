@@ -1,17 +1,19 @@
 'use strict';
 
 const shttp = require('socks5-http-client');
+const shttps = require('socks5-https-client');
 const http = require('http');
 const assert = require('assert');
 
 const ssLocal = require('../lib/ssLocal');
+const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
 
 const DST_ADDR = '127.0.0.1';
 const DST_PORT = 42134;
 const DST_RES_TEXT = 'hello world!';
 const strictEqual = assert.strictEqual;
-const getDstInfo = ssLocal.getDstInfo;
+const getDstInfo = utils.getDstInfo;
 
 describe('getDstInfo', () => {
 
@@ -54,15 +56,17 @@ describe('getDstInfo', () => {
 });
 
 describe('http proxy', () => {
-  let dstServer,
-    ssLocalServer;
+  let dstServer;
+  let ssLocalServer;
+  let ssServerServer;
 
   before(cb => {
+    ssLocalServer = ssLocal.startServer();
+    ssServerServer = ssServer.startServer();
+
     dstServer = http.createServer((req, res) => {
       res.end(DST_RES_TEXT);
     }).listen(DST_PORT, cb);
-
-    ssLocalServer = ssLocal.startServer();
   });
 
   it('should get correct response through ipv4', cb => {
@@ -80,10 +84,18 @@ describe('http proxy', () => {
     });
   });
 
-  xit('should get correct response through domain', cb => {
+  it('should get correct response when the `atyp` is `domain`', cb => {
     shttp.get('http://example.com', res => {
-      console.log('res');
+      res.on('readable', () => {
+        let text = res.read().toString('utf8');
+        assert(!!~text.indexOf('Example Domain'));
+        cb();
+      });
+    });
+  });
 
+  it('should get correct response when the requesting by ssl', cb => {
+    shttps.get('https://example.com', res => {
       res.on('readable', () => {
         let text = res.read().toString('utf8');
         assert(!!~text.indexOf('Example Domain'));
@@ -95,5 +107,6 @@ describe('http proxy', () => {
   after(() => {
     dstServer.close();
     ssLocalServer.close();
+    ssServerServer.close();
   });
 });

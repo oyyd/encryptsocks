@@ -1,7 +1,7 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { createServer as _createServer, connect } from 'net';
-import { inetNtoa } from './utils';
+import { getConfig, getDstInfo } from './utils';
+import logger from './logger';
+import { createCipher, createDecipher } from './encryptor';
 
 function handleMethod(connection, data) {
   // +----+----------+----------+
@@ -18,7 +18,7 @@ function handleMethod(connection, data) {
   // }
 
   if (!~data.indexOf(0x00, 2)) {
-    console.log('unsupported method');
+    logger.warn('unsupported method');
     buf.writeUInt16BE(0x05FF);
     connection.write(buf);
     return -1;
@@ -30,52 +30,25 @@ function handleMethod(connection, data) {
   return 1;
 }
 
-export function getDstInfo(data) {
-  const atyp = data[3];
-
-  let dstAddr;
-  let dstPort;
-  let dstAddrLength;
-  let dstPortIndex;
-
-  switch (atyp) {
-    case 0x01:
-      dstAddrLength = 4;
-      dstAddr = data.slice(4, 8);
-      dstPort = data.slice(8, 10);
-      break;
-    case 0x04:
-      dstAddrLength = 16;
-      dstAddr = data.slice(4, 20);
-      dstPort = data.slice(20, 22);
-      break;
-    case 0x03:
-      dstAddrLength = data[4];
-      dstPortIndex = 5 + dstAddrLength;
-      dstAddr = data.slice(5, dstPortIndex);
-      dstPort = data.slice(dstPortIndex, dstPortIndex + 2);
-      break;
-    default:
-      return null;
-  }
-
-  return {
-    atyp, dstAddrLength, dstAddr, dstPort,
-  };
-}
-
-function handleRequest(connection, data) {
-  // +----+-----+-------+------+----------+----------+
-  // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
-  // +----+-----+-------+------+----------+----------+
-  // | 1  |  1  | X'00' |  1   | Variable |    2     |
-  // +----+-----+-------+------+----------+----------+
+function handleRequest(
+  connection, data, remoteAddr, remotePort, password, method
+) {
   const cmd = data[1];
+  // TODO: most dst infos are not used
   const dstInfo = getDstInfo(data);
-  const repBuf = new Buffer(4);
+  const repBuf = new Buffer(10);
+  // TODO: support domain and ipv6
+  const clientOptions = {
+    port: remotePort,
+    host: remoteAddr,
+  };
+
+  let clientToRemote;
+  let tmp = null;
+  let decipher = null;
 
   if (cmd !== 0x01) {
-    console.log('unsupported cmd');
+    logger.warn('unsupported cmd');
     return {
       stage: -1,
     };
@@ -87,6 +60,33 @@ function handleRequest(connection, data) {
     };
   }
 
+  clientToRemote = connect(clientOptions);
+
+  // TODO: should pause until the replay finished
+  clientToRemote.on('data', remoteData => {
+    // TODO:
+    if (!decipher) {
+      tmp = createDecipher(password, method, remoteData);
+      decipher = tmp.decipher;
+      connection.write(tmp.data);
+    } else {
+      connection.write(decipher.update(remoteData));
+    }
+  });
+
+  clientToRemote.on('close', () => {
+    connection.destroy();
+  });
+
+  connection.on('error', e => {
+    logger.warn(`ssLocal error happened: ${e.message}`);
+    connection.destroy();
+  });
+
+  tmp = createCipher(password, method, data);
+
+  clientToRemote.write(tmp.data);
+
   // +----+-----+-------+------+----------+----------+
   // |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
   // +----+-----+-------+------+----------+----------+
@@ -96,70 +96,59 @@ function handleRequest(connection, data) {
   // TODO: should fill BND fields with 0?
   repBuf.writeUInt16BE(0x0500);
   repBuf.writeUInt16BE(dstInfo.atyp, 2);
+  // TODO: why?
+  repBuf.writeUInt32BE(0x00000000, 4, 4);
+  repBuf.writeUInt32BE(2222, 8, 2);
 
   connection.write(repBuf);
 
   return {
     stage: 2,
-    dstAddr: dstInfo.dstAddr,
-    dstPort: dstInfo.dstPort,
-    atyp: dstInfo.atyp,
+    cipher: tmp.cipher,
+    clientToRemote,
   };
 }
 
-function tunnel(connection, remoteClient, data, atyp, dstAddr, dstPort) {
-  let options;
-
-  if (!remoteClient) {
-    options = {
-      port: dstPort.readUInt16BE(),
-      host: (atyp === 3 ? dstAddr.toString('ascii') : inetNtoa(dstAddr)),
-    };
-
-    // console.log(options);
-
-    remoteClient = connect(options);
-
-    remoteClient.on('data', remoteData => {
-      connection.write(remoteData);
-    });
-
-    remoteClient.on('close', () => {
-      connection.destroy();
-    });
-  }
-
-  remoteClient.write(data);
-
-  return 3;
-}
-
-function handleConnection(connection) {
+function handleConnection(config, connection) {
   let stage = 0;
-  let remoteClient;
+  let clientToRemote;
   let tmp;
-  let dstAddr;
-  let dstPort;
-  let atyp;
+  let cipher;
 
   connection.on('data', data => {
     switch (stage) {
       case 0:
+        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
+
         stage = handleMethod(connection, data);
         break;
       case 1:
-        tmp = handleRequest(connection, data);
-        dstAddr = tmp.dstAddr;
-        dstPort = tmp.dstPort;
-        atyp = tmp.atyp;
+        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
+
+        tmp = handleRequest(
+          connection, data, config.server, config.server_port,
+          config.password, config.method
+        );
+        clientToRemote = tmp.clientToRemote;
         stage = tmp.stage;
+        cipher = tmp.cipher;
+
         break;
       case 2:
-        remoteClient = tunnel(connection, remoteClient, data, atyp, dstAddr, dstPort);
+        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
+        clientToRemote.write(cipher.update(data));
         break;
       default:
         return;
     }
+
+    connection.on('error', e => {
+      logger.warn(`ssLocal error happened: ${e.message}`);
+
+      if (clientToRemote) {
+        clientToRemote.destroy();
+      }
+    });
 
     if (stage === -1) {
       connection.destroy();
@@ -167,8 +156,8 @@ function handleConnection(connection) {
   });
 }
 
-function createServer() {
-  const server = _createServer(handleConnection);
+function createServer(config) {
+  const server = _createServer(handleConnection.bind(null, config));
 
   server.on('close', () => {
     // TODO:
@@ -182,10 +171,10 @@ function createServer() {
 }
 
 export function startServer() {
-  const config = JSON.parse(readFileSync(join(__dirname, '../config.json')));
+  const config = getConfig();
 
   // TODO: throw when the port is occupied
-  const server = createServer().listen(config.local_port);
+  const server = createServer(config).listen(config.local_port);
 
   return server;
 }
