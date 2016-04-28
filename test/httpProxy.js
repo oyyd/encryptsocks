@@ -94,7 +94,8 @@ describe('http proxy', () => {
     });
   });
 
-  it('should get correct response when the requesting by ssl', cb => {
+  // TODO: this test seems to be invalid
+  it.only('should get correct response when the requesting by ssl', cb => {
     shttps.get('https://example.com', res => {
       res.on('readable', () => {
         let text = res.read().toString('utf8');

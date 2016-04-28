@@ -1,23 +1,23 @@
 import { createServer as _createServer, connect } from 'net';
-import { getConfig, getDstInfo, inetNtoa } from './utils';
-import logger from './logger';
+import { getConfig, getDstInfo, inetNtoa, writeOrPause, getArgv } from './utils';
+import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 
-function flushPreservedData(connection, dataArr) {
+function flushPreservedData(connection, clientToDst, dataArr) {
   let i = dataArr.length;
 
   while (i > 0) {
     i--;
-    connection.write(dataArr[i]);
-    logger.debug(dataArr[i].toString('ascii'));
+    writeOrPause(connection, clientToDst, dataArr[i]);
   }
 
   dataArr.length = 0;
 }
 
-function createClientToDst(connection, data, preservedData, password, method) {
-  const dstInfo = getDstInfo(data);
-  let client;
+function createClientToDst(connection, data, preservedData, password, method, cb) {
+  const dstInfo = getDstInfo(data, true);
+
+  let clientToDst;
   let clientOptions;
   let cipher = null;
   let tmp;
@@ -26,9 +26,9 @@ function createClientToDst(connection, data, preservedData, password, method) {
     return null;
   }
 
-  // console.log(dstInfo);
-  // console.log(data.slice(dstInfo.totalLength).toString('ascii'));
-  preservedData.push(data.slice(dstInfo.totalLength));
+  if (dstInfo.totalLength < data.length) {
+    preservedData.push(data.slice(dstInfo.totalLength));
+  }
 
   clientOptions = {
     port: dstInfo.dstPort.readUInt16BE(),
@@ -36,29 +36,33 @@ function createClientToDst(connection, data, preservedData, password, method) {
       ? dstInfo.dstAddr.toString('ascii') : inetNtoa(dstInfo.dstAddr)),
   };
 
-  client = connect(clientOptions);
+  clientToDst = connect(clientOptions, cb);
 
-  client.on('data', clientData => {
+  clientToDst.on('data', clientData => {
     logger.debug(`server received data from DST:${clientData.toString('ascii')}`);
     if (!cipher) {
       tmp = createCipher(password, method, clientData);
       cipher = tmp.cipher;
-      connection.write(tmp.data);
+      writeOrPause(clientToDst, connection, tmp.data);
     } else {
-      connection.write(cipher.update(clientData));
+      writeOrPause(clientToDst, connection, cipher.update(clientData));
     }
   });
 
-  client.on('close', () => {
+  clientToDst.on('drain', () => {
+    connection.resumse();
+  });
+
+  clientToDst.on('end', () => {
+    connection.end();
+  });
+
+  clientToDst.on('error', e => {
+    logger.warn(`ssServer error happened when write to DST: ${e.message}`);
     connection.destroy();
   });
 
-  client.on('error', e => {
-    logger.warn(`ssServer error happened: ${e.message}`);
-    connection.destroy();
-  });
-
-  return client;
+  return clientToDst;
 }
 
 function handleConnection(config, connection) {
@@ -79,13 +83,18 @@ function handleConnection(config, connection) {
     }
 
     switch (stage) {
-
       case 0:
         logger.debug(`server at stage ${stage} received data: ${data.toString('hex')}`);
 
+        // TODO: should pause? or preserve data?
+        connection.pause();
+
         clientToDst = createClientToDst(
           connection, data, preservedData,
-          config.password, config.method
+          config.password, config.method,
+          () => {
+            connection.resume();
+          }
         );
 
         if (!clientToDst) {
@@ -94,24 +103,34 @@ function handleConnection(config, connection) {
           return;
         }
 
-        flushPreservedData(clientToDst, preservedData);
+        flushPreservedData(connection, clientToDst, preservedData);
 
         stage = 1;
         break;
       case 1:
         logger.debug(`server at stage ${stage} received data: ${data.toString('ascii')}`);
 
-        clientToDst.write(data);
+        writeOrPause(connection, clientToDst, data);
+
         break;
       default:
         return;
     }
   });
 
+  connection.on('drain', () => {
+    clientToDst.resume();
+  });
+
+  connection.on('end', () => {
+    clientToDst.end();
+  });
+
   connection.on('error', e => {
-    logger.warn(`ssServer error happened: ${e.message}`);
+    logger.warn(`ssServer error happened in the connection with ssLocal : ${e.message}`);
 
     if (clientToDst) {
+      connection.destroy();
       clientToDst.destroy();
     }
   });
@@ -124,7 +143,13 @@ function createServer(config) {
 }
 
 export function startServer() {
+  const argv = getArgv();
+
   const config = getConfig();
+
+  if (argv.level) {
+    changeLevel(logger, argv.level);
+  }
 
   // TODO: port occupied
   const server = createServer(config).listen(config.server_port);

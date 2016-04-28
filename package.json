@@ -7,7 +7,8 @@
     "build": "babel src --out-dir lib",
     "watch": "babel src --watch --out-dir lib",
     "test": "mocha",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "clean-log": "rm *.log"
   },
   "author": "",
   "license": "BSD",
@@ -21,6 +22,7 @@
     "socks5-https-client": "^1.1.2"
   },
   "dependencies": {
+    "minimist": "^1.2.0",
     "winston": "^2.2.0"
   }
 }

@@ -1,7 +1,11 @@
 import { createServer as _createServer, connect } from 'net';
-import { getConfig, getDstInfo } from './utils';
-import logger from './logger';
+import { getConfig, getDstInfo, writeOrPause, getArgv, getDstStr } from './utils';
+import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
+import { filter } from './filter';
+
+// TODO: remove or handle
+let _id = 0;
 
 function handleMethod(connection, data) {
   // +----+----------+----------+
@@ -25,17 +29,18 @@ function handleMethod(connection, data) {
   }
 
   buf.writeUInt16BE(0x0500);
+  logger.debug(`1. TRY TO WRITE: ${buf}`);
   connection.write(buf);
 
   return 1;
 }
 
 function handleRequest(
-  connection, data, remoteAddr, remotePort, password, method
+  connection, data, remoteAddr, remotePort, password, method,
+  dstInfo
 ) {
   const cmd = data[1];
   // TODO: most dst infos are not used
-  const dstInfo = getDstInfo(data);
   const repBuf = new Buffer(10);
   // TODO: support domain and ipv6
   const clientOptions = {
@@ -46,6 +51,11 @@ function handleRequest(
   let clientToRemote;
   let tmp = null;
   let decipher = null;
+  let decipheredData = null;
+  let cipher = null;
+  let cipheredData = null;
+
+  logger.verbose(`connecting: ${dstInfo.dstAddr.toString('utf8')}:${dstInfo.dstPort.readUInt16BE()}`);
 
   if (cmd !== 0x01) {
     logger.warn('unsupported cmd');
@@ -60,32 +70,7 @@ function handleRequest(
     };
   }
 
-  clientToRemote = connect(clientOptions);
-
-  // TODO: should pause until the replay finished
-  clientToRemote.on('data', remoteData => {
-    // TODO:
-    if (!decipher) {
-      tmp = createDecipher(password, method, remoteData);
-      decipher = tmp.decipher;
-      connection.write(tmp.data);
-    } else {
-      connection.write(decipher.update(remoteData));
-    }
-  });
-
-  clientToRemote.on('close', () => {
-    connection.destroy();
-  });
-
-  connection.on('error', e => {
-    logger.warn(`ssLocal error happened: ${e.message}`);
-    connection.destroy();
-  });
-
-  tmp = createCipher(password, method, data);
-
-  clientToRemote.write(tmp.data);
+  // prepare data
 
   // +----+-----+-------+------+----------+----------+
   // |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
@@ -100,60 +85,149 @@ function handleRequest(
   repBuf.writeUInt32BE(0x00000000, 4, 4);
   repBuf.writeUInt32BE(2222, 8, 2);
 
+  tmp = createCipher(password, method,
+    data.slice(3)); // skip VER, CMD, RSV
+  logger.warn(data.slice(3).toString('hex'));
+  cipher = tmp.cipher;
+  cipheredData = tmp.data;
+
+  // connect
+
+  clientToRemote = connect(clientOptions);
+
+  // TODO: should pause until the replay finished
+  clientToRemote.on('data', remoteData => {
+    // TODO:
+    if (!decipher) {
+      tmp = createDecipher(password, method, remoteData);
+      decipher = tmp.decipher;
+      decipheredData = tmp.data;
+    } else {
+      decipheredData = decipher.update(remoteData);
+    }
+
+    logger.debug(`ssLocal received data from remote: ${decipheredData.toString('hex')}`);
+    writeOrPause(clientToRemote, connection, decipheredData);
+  });
+
+  clientToRemote.on('drain', () => {
+    connection.resume();
+  });
+
+  clientToRemote.on('end', () => {
+    connection.end();
+  });
+
+  clientToRemote.on('error', e => {
+    logger.warn(`ssLocal error happened in clientToRemote when connecting to ${getDstStr(dstInfo)}: ${e.message}`);
+  });
+
+  clientToRemote.on('close', e => {
+    if (e) {
+      connection.destroy();
+    } else {
+      connection.end();
+    }
+  })
+
+  // write
+
+  logger.debug(`2. TRY TO WRITE: ${repBuf.toString('hex')}`);
   connection.write(repBuf);
+
+  // TODO: write before connected
+  writeOrPause(connection, clientToRemote, cipheredData);
 
   return {
     stage: 2,
-    cipher: tmp.cipher,
+    cipher: cipher,
     clientToRemote,
   };
 }
 
 function handleConnection(config, connection) {
+  const id = _id++;
+  const preservedData = [];
+
   let stage = 0;
   let clientToRemote;
   let tmp;
   let cipher;
+  let dstInfo;
 
   connection.on('data', data => {
     switch (stage) {
       case 0:
-        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
+        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client: ${data.toString('hex')}`);
 
         stage = handleMethod(connection, data);
+
         break;
       case 1:
-        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
+        dstInfo = getDstInfo(data);
+
+        // TODO:
+        if (!filter(dstInfo)) {
+          // TODO: clean everything
+          connection.end();
+          connection.destroy();
+          stage = -1;
+          return;
+        }
+
+        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client: ${data.toString('hex')}`);
 
         tmp = handleRequest(
           connection, data, config.server, config.server_port,
-          config.password, config.method
+          config.password, config.method, dstInfo
         );
         clientToRemote = tmp.clientToRemote;
         stage = tmp.stage;
         cipher = tmp.cipher;
 
+
         break;
       case 2:
-        logger.debug(`ssLocal at stage ${stage} received data: ${data.toString('hex')}`);
-        clientToRemote.write(cipher.update(data));
+        tmp = cipher.update(data);
+        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client and write to remote: ${tmp.toString('hex')}`);
+
+        writeOrPause(connection, clientToRemote, tmp);
+
         break;
       default:
         return;
     }
+  });
 
-    connection.on('error', e => {
-      logger.warn(`ssLocal error happened: ${e.message}`);
+  connection.on('drain', () => {
+    console.log('DRAIN');
+    clientToRemote.resume();
+  });
 
-      if (clientToRemote) {
-        clientToRemote.destroy();
-      }
-    });
-
-    if (stage === -1) {
-      connection.destroy();
+  connection.on('end', () => {
+    // TODO: test existence
+    if (clientToRemote) {
+      clientToRemote.end();
     }
   });
+
+  connection.on('close', e => {
+    if (clientToRemote) {
+      if (e) {
+        clientToRemote.destroy();
+      } else {
+        clientToRemote.end();
+      }
+    }
+  });
+
+  connection.on('error', e => {
+    logger.warn(`ssLocal error happened in client connection: ${e.message}`);
+  });
+
+  if (stage === -1) {
+    connection.destroy();
+  }
 }
 
 function createServer(config) {
@@ -163,15 +237,22 @@ function createServer(config) {
     // TODO:
   });
 
-  server.on('error', () => {
+  server.on('error', e => {
     // TODO:
+    logger.warn(`ssLocal server error: ${e.message}`);
   });
 
   return server;
 }
 
 export function startServer() {
+  const argv = getArgv();
+
   const config = getConfig();
+
+  if (argv.level) {
+    changeLevel(logger, argv.level);
+  }
 
   // TODO: throw when the port is occupied
   const server = createServer(config).listen(config.local_port);
