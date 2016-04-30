@@ -5,15 +5,17 @@ const shttps = require('socks5-https-client');
 const http = require('http');
 const assert = require('assert');
 
+const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
 
-const DST_ADDR = '127.0.0.1';
-const DST_PORT = 42134;
-const DST_RES_TEXT = 'hello world!';
 const strictEqual = assert.strictEqual;
 const getDstInfo = utils.getDstInfo;
+const DST_RES_TEXT = testServer.DST_RES_TEXT;
+const DST_ADDR = testServer.DST_ADDR;
+const DST_PORT = testServer.DST_PORT;
+const createHTTPServer = testServer.createHTTPServer;
 
 describe('getDstInfo', () => {
 
@@ -63,13 +65,10 @@ describe('http proxy', () => {
   before(cb => {
     ssLocalServer = ssLocal.startServer();
     ssServerServer = ssServer.startServer();
-
-    dstServer = http.createServer((req, res) => {
-      res.end(DST_RES_TEXT);
-    }).listen(DST_PORT, cb);
+    dstServer = createHTTPServer(cb);
   });
 
-  it('should get correct response through ipv4', cb => {
+  it.only('should get correct response through ipv4', cb => {
     const options = {
       port: DST_PORT,
       host: DST_ADDR,
@@ -95,7 +94,7 @@ describe('http proxy', () => {
   });
 
   // TODO: this test seems to be invalid
-  it.only('should get correct response when the requesting by ssl', cb => {
+  it('should get correct response when the requesting by ssl', cb => {
     shttps.get('https://example.com', res => {
       res.on('readable', () => {
         let text = res.read().toString('utf8');

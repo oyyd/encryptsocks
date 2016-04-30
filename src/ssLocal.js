@@ -17,7 +17,6 @@ function handleMethod(connection, data) {
 
   // TODO:
   // if (data[0] !== 0x05) {
-  //   console.log('unsupported socks version');
   //   return -1;
   // }
 
@@ -37,7 +36,7 @@ function handleMethod(connection, data) {
 
 function handleRequest(
   connection, data, remoteAddr, remotePort, password, method,
-  dstInfo
+  dstInfo, onConnect
 ) {
   const cmd = data[1];
   // TODO: most dst infos are not used
@@ -79,21 +78,24 @@ function handleRequest(
   // +----+-----+-------+------+----------+----------+
 
   // TODO: should fill BND fields with 0?
-  repBuf.writeUInt16BE(0x0500);
-  repBuf.writeUInt16BE(dstInfo.atyp, 2);
+  repBuf.writeUInt32BE(0x05000001);
+  // repBuf.writeUInt16BE(dstInfo.atyp, 2);
   // TODO: why?
   repBuf.writeUInt32BE(0x00000000, 4, 4);
-  repBuf.writeUInt32BE(2222, 8, 2);
+  repBuf.writeUInt16BE(2222, 8, 2);
 
   tmp = createCipher(password, method,
     data.slice(3)); // skip VER, CMD, RSV
-  logger.warn(data.slice(3).toString('hex'));
+  // logger.warn(data.slice(3).toString('hex'));
   cipher = tmp.cipher;
   cipheredData = tmp.data;
 
   // connect
 
-  clientToRemote = connect(clientOptions);
+  clientToRemote = connect(clientOptions, () => {
+    // TODO: no sence?
+    onConnect();
+  });
 
   // TODO: should pause until the replay finished
   clientToRemote.on('data', remoteData => {
@@ -128,7 +130,7 @@ function handleRequest(
     } else {
       connection.end();
     }
-  })
+  });
 
   // write
 
@@ -140,7 +142,7 @@ function handleRequest(
 
   return {
     stage: 2,
-    cipher: cipher,
+    cipher,
     clientToRemote,
   };
 }
@@ -154,6 +156,7 @@ function handleConnection(config, connection) {
   let tmp;
   let cipher;
   let dstInfo;
+  let remoteConnected = false;
 
   connection.on('data', data => {
     switch (stage) {
@@ -179,12 +182,14 @@ function handleConnection(config, connection) {
 
         tmp = handleRequest(
           connection, data, config.server, config.server_port,
-          config.password, config.method, dstInfo
+          config.password, config.method, dstInfo,
+          () => {
+            remoteConnected = true;
+          }
         );
         clientToRemote = tmp.clientToRemote;
         stage = tmp.stage;
         cipher = tmp.cipher;
-
 
         break;
       case 2:
@@ -200,8 +205,9 @@ function handleConnection(config, connection) {
   });
 
   connection.on('drain', () => {
-    console.log('DRAIN');
-    clientToRemote.resume();
+    if (remoteConnected) {
+      clientToRemote.resume();
+    }
   });
 
   connection.on('end', () => {

@@ -68,7 +68,7 @@ export function createCipher(secret, methodName, initialData, _iv) {
 
   return {
     cipher,
-    data: Buffer.concat([iv, cipher.update(initialData)]), 
+    data: Buffer.concat([iv, cipher.update(initialData)]),
   };
 }
 
@@ -78,8 +78,6 @@ export function createDecipher(secret, methodName, initialData) {
   const iv = initialData.slice(0, ivLength);
   const decipher = crypto.createDecipheriv(methodName, key, iv);
   const data = decipher.update(initialData.slice(ivLength));
-
-  // console.log(`SERVER GET: ${data}`);
 
   return {
     decipher,

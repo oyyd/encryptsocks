@@ -59,27 +59,36 @@ function createClientToDst(connection, data, preservedData, password, method, cb
 
   clientToDst.on('error', e => {
     logger.warn(`ssServer error happened when write to DST: ${e.message}`);
-    connection.destroy();
+  });
+
+  clientToDst.on('close', e => {
+    if (e) {
+      connection.destroy();
+    } else {
+      connection.end();
+    }
   });
 
   return clientToDst;
 }
 
 function handleConnection(config, connection) {
+  // TODO: is this necessary?
   const preservedData = [];
 
   let stage = 0;
   let clientToDst = null;
   let decipher = null;
   let tmp;
+  let data;
 
-  connection.on('data', data => {
+  connection.on('data', chunck => {
     if (!decipher) {
-      tmp = createDecipher(config.password, config.method, data);
+      tmp = createDecipher(config.password, config.method, chunck);
       decipher = tmp.decipher;
       data = tmp.data;
     } else {
-      data = decipher.update(data);
+      data = decipher.update(chunck);
     }
 
     switch (stage) {
@@ -128,10 +137,15 @@ function handleConnection(config, connection) {
 
   connection.on('error', e => {
     logger.warn(`ssServer error happened in the connection with ssLocal : ${e.message}`);
+  });
 
+  connection.on('close', e => {
     if (clientToDst) {
-      connection.destroy();
-      clientToDst.destroy();
+      if (e) {
+        clientToDst.destroy();
+      } else {
+        clientToDst.end();
+      }
     }
   });
 }
