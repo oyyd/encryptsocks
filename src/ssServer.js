@@ -1,7 +1,10 @@
 import { createServer as _createServer, connect } from 'net';
-import { getConfig, getDstInfo, inetNtoa, writeOrPause, getArgv } from './utils';
+import {
+  getConfig, getDstInfo, inetNtoa, writeOrPause, getArgv,
+} from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
+import createUDPRelay from './createUDPRelay';
 
 function flushPreservedData(connection, clientToDst, dataArr) {
   let i = dataArr.length;
@@ -54,7 +57,9 @@ function createClientToDst(connection, data, preservedData, password, method, cb
   });
 
   clientToDst.on('end', () => {
-    connection.end();
+    if (connection) {
+      connection.end();
+    }
   });
 
   clientToDst.on('error', e => {
@@ -62,10 +67,12 @@ function createClientToDst(connection, data, preservedData, password, method, cb
   });
 
   clientToDst.on('close', e => {
-    if (e) {
-      connection.destroy();
-    } else {
-      connection.end();
+    if (connection) {
+      if (e) {
+        connection.destroy();
+      } else {
+        connection.end();
+      }
     }
   });
 
@@ -132,7 +139,9 @@ function handleConnection(config, connection) {
   });
 
   connection.on('end', () => {
-    clientToDst.end();
+    if (clientToDst) {
+      clientToDst.end();
+    }
   });
 
   connection.on('error', e => {
@@ -151,9 +160,12 @@ function handleConnection(config, connection) {
 }
 
 function createServer(config) {
-  const server = _createServer(handleConnection.bind(null, config));
+  const server = _createServer(handleConnection.bind(null, config)).listen(config.serverPort);
+  const udpRelay = createUDPRelay(config, true);
 
-  return server;
+  return {
+    server, udpRelay,
+  };
 }
 
 export function startServer() {
@@ -166,7 +178,7 @@ export function startServer() {
   }
 
   // TODO: port occupied
-  const server = createServer(config).listen(config.server_port);
+  const server = createServer(config);
 
   return server;
 }

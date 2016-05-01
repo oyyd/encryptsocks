@@ -1,11 +1,12 @@
 import { createServer as _createServer, connect } from 'net';
-import { getConfig, getDstInfo, writeOrPause, getArgv, getDstStr } from './utils';
+import {
+  getConfig, getDstInfo, writeOrPause, getArgv, getDstStr,
+  inetAton,
+} from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import { filter } from './filter';
-
-// TODO: remove or handle
-let _id = 0;
+import createUDPRelay from './createUDPRelay';
 
 function handleMethod(connection, data) {
   // +----+----------+----------+
@@ -14,11 +15,6 @@ function handleMethod(connection, data) {
   // | 1  |    1     | 1 to 255 |
   // +----+----------+----------+
   const buf = new Buffer(2);
-
-  // TODO:
-  // if (data[0] !== 0x05) {
-  //   return -1;
-  // }
 
   if (!~data.indexOf(0x00, 2)) {
     logger.warn('unsupported method');
@@ -35,37 +31,32 @@ function handleMethod(connection, data) {
 }
 
 function handleRequest(
-  connection, data, remoteAddr, remotePort, password, method,
+  connection, data,
+  { serverAddr, serverPort, password, method, localAddr, localPort },
   dstInfo, onConnect
 ) {
   const cmd = data[1];
-  // TODO: most dst infos are not used
-  const repBuf = new Buffer(10);
   // TODO: support domain and ipv6
   const clientOptions = {
-    port: remotePort,
-    host: remoteAddr,
+    port: serverPort,
+    host: serverAddr,
   };
+  const isUDPRelay = (cmd === 0x03);
 
+  // TODO: most dst infos are not used
+  let repBuf;
   let clientToRemote;
   let tmp = null;
   let decipher = null;
   let decipheredData = null;
   let cipher = null;
   let cipheredData = null;
+  let stage = -1;
 
-  logger.verbose(`connecting: ${dstInfo.dstAddr.toString('utf8')}:${dstInfo.dstPort.readUInt16BE()}`);
-
-  if (cmd !== 0x01) {
-    logger.warn('unsupported cmd');
+  if (cmd !== 0x01 && !isUDPRelay) {
+    logger.warn(`unsupported cmd: ${cmd}`);
     return {
-      stage: -1,
-    };
-  }
-
-  if (!dstInfo) {
-    return {
-      stage: -1,
+      stage,
     };
   }
 
@@ -77,11 +68,27 @@ function handleRequest(
   // | 1  |  1  | X'00' |  1   | Variable |    2     |
   // +----+-----+-------+------+----------+----------+
 
-  // TODO: should fill BND fields with 0?
+  if (isUDPRelay) {
+    repBuf = new Buffer(4);
+    repBuf.writeUInt32BE(0x05000001);
+    tmp = new Buffer(2);
+    tmp.writeUInt16BE(localPort);
+    repBuf = Buffer.concat([repBuf, inetAton(localAddr), tmp]);
+
+    logger.debug(`Response to udp association: ${repBuf.toString('hex')}`);
+    connection.write(repBuf);
+
+    return {
+      stage: 10,
+    };
+  }
+
+  logger.verbose(`connecting: ${dstInfo.dstAddr.toString('utf8')}:${dstInfo.dstPort.readUInt16BE()}`);
+
+  repBuf = new Buffer(10);
   repBuf.writeUInt32BE(0x05000001);
-  // repBuf.writeUInt16BE(dstInfo.atyp, 2);
-  // TODO: why?
   repBuf.writeUInt32BE(0x00000000, 4, 4);
+  // TODO: should this be 0x0000?
   repBuf.writeUInt16BE(2222, 8, 2);
 
   tmp = createCipher(password, method,
@@ -133,7 +140,6 @@ function handleRequest(
   });
 
   // write
-
   logger.debug(`2. TRY TO WRITE: ${repBuf.toString('hex')}`);
   connection.write(repBuf);
 
@@ -148,7 +154,6 @@ function handleRequest(
 }
 
 function handleConnection(config, connection) {
-  const id = _id++;
   const preservedData = [];
 
   let stage = 0;
@@ -161,13 +166,19 @@ function handleConnection(config, connection) {
   connection.on('data', data => {
     switch (stage) {
       case 0:
-        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client: ${data.toString('hex')}`);
+        logger.debug(`ssLocal at stage ${stage} received data from client: ${data.toString('hex')}`);
 
         stage = handleMethod(connection, data);
 
         break;
       case 1:
         dstInfo = getDstInfo(data);
+
+        if (!dstInfo) {
+          logger.warn(`Failed to get 'dstInfo' from parsing data: ${data}`);
+          connection.destroy();
+          return;
+        }
 
         // TODO:
         if (!filter(dstInfo)) {
@@ -178,23 +189,27 @@ function handleConnection(config, connection) {
           return;
         }
 
-        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client: ${data.toString('hex')}`);
+        logger.debug(`ssLocal at stage ${stage} received data from client: ${data.toString('hex')}`);
 
         tmp = handleRequest(
-          connection, data, config.server, config.server_port,
-          config.password, config.method, dstInfo,
+          connection, data, config, dstInfo,
           () => {
             remoteConnected = true;
           }
         );
-        clientToRemote = tmp.clientToRemote;
-        stage = tmp.stage;
-        cipher = tmp.cipher;
 
+        stage = tmp.stage;
+
+        if (stage === 2) {
+          clientToRemote = tmp.clientToRemote;
+          cipher = tmp.cipher;
+        }
+
+        // TODO: should destroy everything for UDP relay?
         break;
       case 2:
         tmp = cipher.update(data);
-        logger.debug(`ssLocal(${id}) at stage ${stage} received data from client and write to remote: ${tmp.toString('hex')}`);
+        logger.debug(`ssLocal at stage ${stage} received data from client and write to remote: ${tmp.toString('hex')}`);
 
         writeOrPause(connection, clientToRemote, tmp);
 
@@ -238,6 +253,7 @@ function handleConnection(config, connection) {
 
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config));
+  const udpRelay = createUDPRelay(config, false);
 
   server.on('close', () => {
     // TODO:
@@ -248,7 +264,11 @@ function createServer(config) {
     logger.warn(`ssLocal server error: ${e.message}`);
   });
 
-  return server;
+  server.listen(config.localPort);
+
+  return {
+    server, udpRelay,
+  };
 }
 
 export function startServer() {
@@ -261,7 +281,7 @@ export function startServer() {
   }
 
   // TODO: throw when the port is occupied
-  const server = createServer(config).listen(config.local_port);
+  const server = createServer(config);
 
   return server;
 }

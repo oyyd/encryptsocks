@@ -1,6 +1,7 @@
 import winston from 'winston';
 
-const DEFAULT_LEVEL = 'warn';
+// const DEFAULT_LEVEL = 'warn';
+const DEFAULT_LEVEL = 'debug';
 const DEFAULT_COMMON_OPTIONS = {
   colorize: true,
   timestamp: true,

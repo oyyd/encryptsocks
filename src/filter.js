@@ -2,7 +2,7 @@ import { getDstStr } from './utils';
 
 // TODO:
 let defaultDenyList = [
-  /google/,
+  // /google/,
 ];
 let denyListLength = defaultDenyList.length;
 

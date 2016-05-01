@@ -1,7 +1,7 @@
 {
   "name": "shadowsocks-js",
   "version": "1.0.0",
-  "description": "",
+  "description": "Yet another shadowsocks implementation in node.",
   "main": "./lib/index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
@@ -11,7 +11,7 @@
     "clean-log": "rm *.log",
     "test-server": "node test/testServer"
   },
-  "author": "",
+  "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",
   "devDependencies": {
     "babel-cli": "^6.6.5",
@@ -19,6 +19,7 @@
     "eslint": "^2.7.0",
     "eslint-config-airbnb": "^6.2.0",
     "mocha": "^2.4.5",
+    "socks": "^1.1.9",
     "socks5-http-client": "^1.0.2",
     "socks5-https-client": "^1.1.2"
   },

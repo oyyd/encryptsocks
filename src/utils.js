@@ -2,6 +2,10 @@ import { join } from 'path';
 import { readFileSync } from 'fs';
 import minimist from 'minimist';
 
+export function sendDgram(socket, data, ...args) {
+  socket.send(data, 0, data.length, ...args);
+}
+
 export function getArgv() {
   return minimist(process.argv.slice(2));
 }
@@ -16,15 +20,7 @@ export function writeOrPause(fromCon, toCon, data) {
   return res;
 }
 
-export function getDstInfo(data, isServer) {
-  // +----+-----+-------+------+----------+----------+
-  // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
-  // +----+-----+-------+------+----------+----------+
-  // | 1  |  1  | X'00' |  1   | Variable |    2     |
-  // +----+-----+-------+------+----------+----------+
-  // Yet shadowsocks begin with ATYP.
-
-  const offset = isServer ? 0 : 3;
+function _getDstInfo(data, offset) {
   const atyp = data[offset];
 
   let dstAddr;
@@ -32,6 +28,7 @@ export function getDstInfo(data, isServer) {
   let dstAddrLength;
   let dstPortIndex;
   let dstPortEnd;
+  // length of non-data field
   let totalLength;
 
   switch (atyp) {
@@ -63,6 +60,31 @@ export function getDstInfo(data, isServer) {
     atyp, dstAddrLength, dstAddr, dstPort,
     totalLength,
   };
+}
+
+export function getDstInfo(data, isServer) {
+  // +----+-----+-------+------+----------+----------+
+  // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
+  // +----+-----+-------+------+----------+----------+
+  // | 1  |  1  | X'00' |  1   | Variable |    2     |
+  // +----+-----+-------+------+----------+----------+
+  // Yet shadowsocks begin with ATYP.
+
+  const offset = isServer ? 0 : 3;
+  return _getDstInfo(data, offset);
+}
+
+// TODO: same
+export function getDstInfoFromUDPMsg(data, isServer) {
+  // +----+------+------+----------+----------+----------+
+  // |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
+  // +----+------+------+----------+----------+----------+
+  // | 2  |  1   |  1   | Variable |    2     | Variable |
+  // +----+------+------+----------+----------+----------+
+
+  const offset = isServer ? 0 : 3;
+
+  return _getDstInfo(data, offset);
 }
 
 export function inetNtoa(buf) {

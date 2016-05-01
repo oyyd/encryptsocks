@@ -68,7 +68,7 @@ describe('http proxy', () => {
     dstServer = createHTTPServer(cb);
   });
 
-  it.only('should get correct response through ipv4', cb => {
+  it('should get correct response through ipv4', cb => {
     const options = {
       port: DST_PORT,
       host: DST_ADDR,
@@ -106,7 +106,9 @@ describe('http proxy', () => {
 
   after(() => {
     dstServer.close();
-    ssLocalServer.close();
-    ssServerServer.close();
+    ssLocalServer.server.close();
+    ssLocalServer.udpRelay.close();
+    ssServerServer.server.close();
+    ssServerServer.udpRelay.close();
   });
 });
