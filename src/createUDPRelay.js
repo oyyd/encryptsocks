@@ -81,6 +81,7 @@ export default function createUDPRelay(config, isServer) {
   const listenPort = (isServer ? serverPort : localPort);
 
   socket.on('message', (msg, rinfo) => {
+    logger.debug(`${NAME} receive message: ${msg}`);
     const dstInfo = getDstInfoFromUDPMsg(msg, isServer);
     const index = getIndex(rinfo, dstInfo);
     const dstAddrStr = inetNtoa(dstInfo.dstAddr);
@@ -125,7 +126,7 @@ export default function createUDPRelay(config, isServer) {
   });
 
   socket.bind(listenPort, () => {
-    logger.verbose(`udpRelay is listening on: ${listenPort}`);
+    logger.verbose(`${NAME} is listening on: ${listenPort}`);
   });
 
   return socket;

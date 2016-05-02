@@ -1,7 +1,6 @@
 import winston from 'winston';
 
-// const DEFAULT_LEVEL = 'warn';
-const DEFAULT_LEVEL = 'debug';
+const DEFAULT_LEVEL = 'warn';
 const DEFAULT_COMMON_OPTIONS = {
   colorize: true,
   timestamp: true,
@@ -18,8 +17,8 @@ function createLogData(level) {
       })),
       new (winston.transports.File)(Object.assign(
         DEFAULT_COMMON_OPTIONS, DEFAULT_FILE_OPTIONS, {
-        level,
-      })),
+          level,
+        })),
     ],
   };
 }

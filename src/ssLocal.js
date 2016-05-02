@@ -8,6 +8,8 @@ import { createCipher, createDecipher } from './encryptor';
 import { filter } from './filter';
 import createUDPRelay from './createUDPRelay';
 
+const NAME = 'ssLocal';
+
 function handleMethod(connection, data) {
   // +----+----------+----------+
   // |VER | NMETHODS | METHODS  |
@@ -265,6 +267,7 @@ function createServer(config) {
   });
 
   server.listen(config.localPort);
+  logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
     server, udpRelay,
@@ -273,11 +276,11 @@ function createServer(config) {
 
 export function startServer() {
   const argv = getArgv();
-
   const config = getConfig();
+  const level = argv.level || config.level;
 
-  if (argv.level) {
-    changeLevel(logger, argv.level);
+  if (level) {
+    changeLevel(logger, level);
   }
 
   // TODO: throw when the port is occupied

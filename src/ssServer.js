@@ -6,6 +6,8 @@ import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 
+const NAME = 'ssServer';
+
 function flushPreservedData(connection, clientToDst, dataArr) {
   let i = dataArr.length;
 
@@ -163,6 +165,8 @@ function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config)).listen(config.serverPort);
   const udpRelay = createUDPRelay(config, true);
 
+  logger.verbose(`${NAME} is listening on ${config.serverAddr}:${config.serverPort}`);
+
   return {
     server, udpRelay,
   };
@@ -170,11 +174,11 @@ function createServer(config) {
 
 export function startServer() {
   const argv = getArgv();
-
   const config = getConfig();
+  const level = argv.level || config.level;
 
-  if (argv.level) {
-    changeLevel(logger, argv.level);
+  if (level) {
+    changeLevel(logger, level);
   }
 
   // TODO: port occupied

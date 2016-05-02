@@ -26,7 +26,7 @@ describe('UDP Relay', () => {
     dstServer = createUDPServer();
   });
 
-  it.only('should work in for UDP association', cb => {
+  it('should work in for UDP association', cb => {
     createUDPAssociate((msg, info) => {
       assert(msg, 'Hello there');
       cb();
