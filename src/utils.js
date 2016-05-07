@@ -88,7 +88,21 @@ export function getDstInfoFromUDPMsg(data, isServer) {
 }
 
 export function inetNtoa(buf) {
-  return `${buf[0]}.${buf[1]}.${buf[2]}.${buf[3]}`;
+  switch (buf.length) {
+    case 4:
+      return `${buf[0]}.${buf[1]}.${buf[2]}.${buf[3]}`;
+    case 16: {
+      let i;
+      let res = '';
+
+      for (i = 0; i < 16; i += 2) {
+        res = `${res}:${buf.readUInt16BE(i)}`;
+      }
+
+      return res.slice(1);
+    } default:
+      return null;
+  }
 }
 
 export function inetAton(ipStr) {

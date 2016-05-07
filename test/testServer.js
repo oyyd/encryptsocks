@@ -4,11 +4,12 @@ const http = require('http');
 const https = require('https');
 const dgram = require('dgram');
 const Socks = require('socks');
+const config = require('../config.json');
 
 const DST_RES_TEXT = 'hello world!';
 const DST_ADDR = '127.0.0.1';
 const DST_PORT = 42134;
-const SOCKS_PORT = 1080;
+const SOCKS_PORT = config.localPort;
 
 const UDP_ASSOCIATE_OPTIONS = {
   proxy: {

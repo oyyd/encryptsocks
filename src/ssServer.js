@@ -19,13 +19,17 @@ function flushPreservedData(connection, clientToDst, dataArr) {
   dataArr.length = 0;
 }
 
-function createClientToDst(connection, data, preservedData, password, method, cb) {
+function createClientToDst(
+  connection, data, preservedData,
+  password, method, onConnect, isLocalConnected
+) {
   const dstInfo = getDstInfo(data, true);
 
   let clientToDst;
   let clientOptions;
   let cipher = null;
   let tmp;
+  let cipheredData;
 
   if (!dstInfo) {
     return null;
@@ -41,16 +45,23 @@ function createClientToDst(connection, data, preservedData, password, method, cb
       ? dstInfo.dstAddr.toString('ascii') : inetNtoa(dstInfo.dstAddr)),
   };
 
-  clientToDst = connect(clientOptions, cb);
+  clientToDst = connect(clientOptions, onConnect);
 
   clientToDst.on('data', clientData => {
     logger.debug(`server received data from DST:${clientData.toString('ascii')}`);
+
     if (!cipher) {
       tmp = createCipher(password, method, clientData);
       cipher = tmp.cipher;
-      writeOrPause(clientToDst, connection, tmp.data);
+      cipheredData = tmp.data;
     } else {
-      writeOrPause(clientToDst, connection, cipher.update(clientData));
+      cipheredData = cipher.update(clientData);
+    }
+
+    if (isLocalConnected()) {
+      writeOrPause(clientToDst, connection, cipheredData);
+    } else {
+      clientToDst.destroy();
     }
   });
 
@@ -59,17 +70,17 @@ function createClientToDst(connection, data, preservedData, password, method, cb
   });
 
   clientToDst.on('end', () => {
-    if (connection) {
+    if (isLocalConnected()) {
       connection.end();
     }
   });
 
   clientToDst.on('error', e => {
-    logger.warn(`ssServer error happened when write to DST: ${e.message}`);
+    logger.warn(`ssServer error happened when write to DST: ${e.stack}`);
   });
 
   clientToDst.on('close', e => {
-    if (connection) {
+    if (isLocalConnected()) {
       if (e) {
         connection.destroy();
       } else {
@@ -90,14 +101,21 @@ function handleConnection(config, connection) {
   let decipher = null;
   let tmp;
   let data;
+  let localConnected = true;
+  let dstConnected = false;
 
   connection.on('data', chunck => {
-    if (!decipher) {
-      tmp = createDecipher(config.password, config.method, chunck);
-      decipher = tmp.decipher;
-      data = tmp.data;
-    } else {
-      data = decipher.update(chunck);
+    try {
+      if (!decipher) {
+        tmp = createDecipher(config.password, config.method, chunck);
+        decipher = tmp.decipher;
+        data = tmp.data;
+      } else {
+        data = decipher.update(chunck);
+      }
+    } catch (e) {
+      logger.warn(`${NAME} receive invalid data`);
+      return;
     }
 
     switch (stage) {
@@ -111,8 +129,10 @@ function handleConnection(config, connection) {
           connection, data, preservedData,
           config.password, config.method,
           () => {
+            dstConnected = true;
             connection.resume();
-          }
+          },
+          () => localConnected
         );
 
         if (!clientToDst) {
@@ -136,12 +156,16 @@ function handleConnection(config, connection) {
     }
   });
 
+  // TODO: setTimeout to close sockets
+
   connection.on('drain', () => {
     clientToDst.resume();
   });
 
   connection.on('end', () => {
-    if (clientToDst) {
+    localConnected = false;
+
+    if (dstConnected) {
       clientToDst.end();
     }
   });
@@ -151,7 +175,9 @@ function handleConnection(config, connection) {
   });
 
   connection.on('close', e => {
-    if (clientToDst) {
+    localConnected = false;
+
+    if (dstConnected) {
       if (e) {
         clientToDst.destroy();
       } else {

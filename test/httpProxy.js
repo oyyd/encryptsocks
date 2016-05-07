@@ -9,6 +9,7 @@ const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
+const config = require('../config.json');
 
 const strictEqual = assert.strictEqual;
 const getDstInfo = utils.getDstInfo;
@@ -37,6 +38,18 @@ describe('getDstInfo', () => {
     strictEqual(dstInfo.atyp, 0x01);
     strictEqual(dstInfo.dstAddrLength, 4);
     strictEqual(utils.inetNtoa(dstInfo.dstAddr), '127.0.0.1');
+    strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
+  });
+
+  it('should return correct DST info when parsing ipv6', () => {
+    const buffer = new Buffer(22);
+    buffer.write('0501000400000000000000000000000000000001a496', 'hex');
+
+    const dstInfo = getDstInfo(buffer);
+
+    strictEqual(dstInfo.atyp, 0x04);
+    strictEqual(dstInfo.dstAddrLength, 16);
+    strictEqual(utils.inetNtoa(dstInfo.dstAddr), '0:0:0:0:0:0:0:1');
     strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
   });
 
@@ -72,6 +85,25 @@ describe('http proxy', () => {
     const options = {
       port: DST_PORT,
       host: DST_ADDR,
+      socksHost: config.localHost,
+      socksPort: config.localPort,
+    };
+
+    shttp.get(options, res => {
+      res.on('readable', () => {
+        strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
+          'Responsed text is not same');
+        cb();
+      });
+    });
+  });
+
+  it('should get correct response through ipv6', cb => {
+    const options = {
+      port: DST_PORT,
+      host: '::1',
+      socksHost: config.localHost,
+      socksPort: config.localPort,
     };
 
     shttp.get(options, res => {

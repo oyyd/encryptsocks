@@ -18,10 +18,12 @@ function handleMethod(connection, data) {
   // +----+----------+----------+
   const buf = new Buffer(2);
 
-  if (!~data.indexOf(0x00, 2)) {
-    logger.warn('unsupported method');
+  // allow `no authetication` or any usename/password
+  if (!~data.indexOf(0x00, 2) && !~data.indexOf(0x02, 2)) {
+    logger.warn(`unsupported method: ${data.toString('hex')}`);
     buf.writeUInt16BE(0x05FF);
     connection.write(buf);
+    connection.end();
     return -1;
   }
 
@@ -35,10 +37,9 @@ function handleMethod(connection, data) {
 function handleRequest(
   connection, data,
   { serverAddr, serverPort, password, method, localAddr, localPort },
-  dstInfo, onConnect
+  dstInfo, onConnect, isClientConnected
 ) {
   const cmd = data[1];
-  // TODO: support domain and ipv6
   const clientOptions = {
     port: serverPort,
     host: serverAddr,
@@ -53,12 +54,11 @@ function handleRequest(
   let decipheredData = null;
   let cipher = null;
   let cipheredData = null;
-  let stage = -1;
 
   if (cmd !== 0x01 && !isUDPRelay) {
     logger.warn(`unsupported cmd: ${cmd}`);
     return {
-      stage,
+      stage: -1,
     };
   }
 
@@ -118,7 +118,12 @@ function handleRequest(
     }
 
     logger.debug(`ssLocal received data from remote: ${decipheredData.toString('hex')}`);
-    writeOrPause(clientToRemote, connection, decipheredData);
+
+    if (isClientConnected()) {
+      writeOrPause(clientToRemote, connection, decipheredData);
+    } else {
+      clientToRemote.destroy();
+    }
   });
 
   clientToRemote.on('drain', () => {
@@ -156,14 +161,13 @@ function handleRequest(
 }
 
 function handleConnection(config, connection) {
-  const preservedData = [];
-
   let stage = 0;
   let clientToRemote;
   let tmp;
   let cipher;
   let dstInfo;
   let remoteConnected = false;
+  let clientConnected = true;
 
   connection.on('data', data => {
     switch (stage) {
@@ -196,8 +200,10 @@ function handleConnection(config, connection) {
         tmp = handleRequest(
           connection, data, config, dstInfo,
           () => {
+            // after connected
             remoteConnected = true;
-          }
+          },
+          () => clientConnected
         );
 
         stage = tmp.stage;
@@ -228,14 +234,15 @@ function handleConnection(config, connection) {
   });
 
   connection.on('end', () => {
-    // TODO: test existence
-    if (clientToRemote) {
+    clientConnected = false;
+    if (remoteConnected) {
       clientToRemote.end();
     }
   });
 
   connection.on('close', e => {
-    if (clientToRemote) {
+    clientConnected = false;
+    if (remoteConnected) {
       if (e) {
         clientToRemote.destroy();
       } else {

@@ -53,8 +53,8 @@ const LRU_OPTIONS = {
 // TODO: do we actually need multiple client sockets?
 // TODO: remove invalid clients
 
-function getIndex({ address, port }, { dstAddr, dstPort }) {
-  return `${address}:${port}_${dstAddr}:${dstPort}`;
+function getIndex({ address, port }, { dstAddrStr, dstPortNum }) {
+  return `${address}:${port}_${dstAddrStr}:${dstPortNum}`;
 }
 
 function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
@@ -81,11 +81,14 @@ export default function createUDPRelay(config, isServer) {
   const listenPort = (isServer ? serverPort : localPort);
 
   socket.on('message', (msg, rinfo) => {
-    logger.debug(`${NAME} receive message: ${msg}`);
+    // TODO: drop
+    logger.warn(`${NAME} receive message: ${msg.toString('hex')}`);
     const dstInfo = getDstInfoFromUDPMsg(msg, isServer);
-    const index = getIndex(rinfo, dstInfo);
+    console.log(`${NAME} receive dstInfo`, dstInfo);
     const dstAddrStr = inetNtoa(dstInfo.dstAddr);
     const dstPortNum = dstInfo.dstPort.readUInt16BE();
+    const index = getIndex(rinfo, { dstAddrStr, dstPortNum });
+    console.log('enter');
 
     let client = cache.get(index);
 
