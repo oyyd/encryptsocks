@@ -15,6 +15,10 @@ const DST_PORT = testServer.DST_PORT;
 const createUDPAssociate = testServer.createUDPAssociate;
 const createUDPServer = testServer.createUDPServer;
 
+const TIMEOUT = 5000;
+const UDP_RES_TYPE = testServer.UDP_RES_TYPE;
+const UDP_RES_MSG = testServer.UDP_RES_MSG;
+
 describe('UDP Relay', () => {
   let dstServer;
   let ssLocalServer;
@@ -26,10 +30,47 @@ describe('UDP Relay', () => {
     dstServer = createUDPServer();
   });
 
-  it('should work in for UDP association', cb => {
-    createUDPAssociate((msg, info) => {
-      assert(msg, 'Hello there');
-      cb();
+  it('should work in for UDP association and receive message repeately', function(cb) {
+    this.timeout(5000);
+
+    let EXPECTED_TIME = 3;
+    let count = 0;
+
+    createUDPAssociate((sendUDPFrame) => {
+      sendUDPFrame(UDP_RES_TYPE.CONTINUOUS);
+    }, (msg, info, client) => {
+      assert(msg, UDP_RES_MSG);
+
+      count ++;
+
+      if (count === EXPECTED_TIME){
+        client.close();
+        cb();
+      }
+    });
+  });
+
+  it('should work in for UDP association', function(cb) {
+    this.timeout(5000);
+
+    let EXPECTED_TIME = 3;
+    let count = 0;
+
+    createUDPAssociate((sendToDST) => {
+      let i;
+
+      for (i = 0; i <= EXPECTED_TIME; i++) {
+        sendToDST(UDP_RES_TYPE.REPEAT_ONCE);
+      }
+    }, (msg, info, client) => {
+      assert(msg.toString(), UDP_RES_TYPE.REPEAT_ONCE);
+
+      count ++;
+
+      if (count === EXPECTED_TIME){
+        client.close();
+        cb();
+      }
     });
   });
 

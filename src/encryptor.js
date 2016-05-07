@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 // TODO: directly export from shadowsocks-nodejs
+// remove those items that are not supported
 const cryptoParamLength = {
   'aes-128-cfb': [16, 16],
   'aes-192-cfb': [24, 16],
@@ -83,4 +84,12 @@ export function createDecipher(secret, methodName, initialData) {
     decipher,
     data,
   };
+}
+
+export function encrypt(secret, methodName, data, _iv) {
+  return createCipher(secret, methodName, data, _iv).data;
+}
+
+export function decrypt(secret, methodName, data) {
+  return createDecipher(secret, methodName, data).data;
 }

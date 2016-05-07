@@ -2,6 +2,8 @@ const encryptor = require('../lib/encryptor');
 const assert = require('assert');
 
 const strictEqual = assert.strictEqual;
+const encrypt = encryptor.encrypt;
+const decrypt = encryptor.decrypt;
 
 describe('encryptor', () => {
   var bufBinary = '0101010101010101';
@@ -50,5 +52,20 @@ describe('encryptor', () => {
     decipheredData = tmp2.decipher.update(cipheredData);
 
     strictEqual(decipheredData.toString('utf8'), secondData);
+  });
+
+  it('should correctly encrypt and decrypt the data', () => {
+    var initialData = 'Hello World';
+    var expected = '00000000000000000000000000000000a4d373d22eaa7784c76825';
+    var iv = new Buffer(encryptor.getParamLength(methodName)[1]);
+    iv.fill(0);
+
+    var cipheredData = encrypt(password, methodName, initialData, iv);
+
+    strictEqual(cipheredData.toString('hex'), expected);
+
+    var decipheredData = decrypt(password, methodName, cipheredData);
+
+    strictEqual(decipheredData.toString('ascii'), initialData);
   });
 });

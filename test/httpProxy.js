@@ -18,6 +18,8 @@ const DST_ADDR = testServer.DST_ADDR;
 const DST_PORT = testServer.DST_PORT;
 const createHTTPServer = testServer.createHTTPServer;
 
+const TIMEOUT = 5000;
+
 describe('getDstInfo', () => {
 
   it('should return `null` when the `atyp` type is not supported ', () => {
@@ -81,7 +83,9 @@ describe('http proxy', () => {
     dstServer = createHTTPServer(cb);
   });
 
-  it('should get correct response through ipv4', cb => {
+  it('should get correct response through ipv4', function(cb) {
+    this.timeout(TIMEOUT);
+
     const options = {
       port: DST_PORT,
       host: DST_ADDR,
@@ -98,7 +102,9 @@ describe('http proxy', () => {
     });
   });
 
-  it('should get correct response through ipv6', cb => {
+  it('should get correct response through ipv6', function(cb) {
+    this.timeout(TIMEOUT);
+
     const options = {
       port: DST_PORT,
       host: '::1',
@@ -110,12 +116,14 @@ describe('http proxy', () => {
       res.on('readable', () => {
         strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
           'Responsed text is not same');
-        cb();
+        cb()
       });
     });
   });
 
-  it('should get correct response when the `atyp` is `domain`', cb => {
+  it('should get correct response when the `atyp` is `domain`', function(cb) {
+    this.timeout(TIMEOUT);
+
     shttp.get('http://example.com', res => {
       res.on('readable', () => {
         let text = res.read().toString('utf8');
@@ -126,7 +134,9 @@ describe('http proxy', () => {
   });
 
   // TODO: this test seems to be invalid
-  it('should get correct response when the requesting by ssl', cb => {
+  it('should get correct response when the requesting by ssl', function(cb) {
+    this.timeout(TIMEOUT);
+
     shttps.get('https://example.com', res => {
       res.on('readable', () => {
         let text = res.read().toString('utf8');

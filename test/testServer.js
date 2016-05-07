@@ -11,6 +11,12 @@ const DST_ADDR = '127.0.0.1';
 const DST_PORT = 42134;
 const SOCKS_PORT = config.localPort;
 
+const UDP_RES_TYPE = {
+  CONTINUOUS: 'CONTINUOUS',
+  REPEAT_ONCE: 'REPEAT_ONCE',
+};
+const UDP_RES_MSG = 'Hello there';
+
 const UDP_ASSOCIATE_OPTIONS = {
   proxy: {
     ipaddress: DST_ADDR,
@@ -36,36 +42,58 @@ function createHTTPSServer() {
 
 function createUDPServer() {
   const server = dgram.createSocket('udp4');
-  const MSG = 'Hello there';
 
   let msgTimer;
 
   server.bind(DST_PORT, DST_ADDR);
 
   server.on('message', (msg, info) => {
-    server.send(MSG, 0, MSG.length, info.port, info.address);
+    switch (msg.toString('utf8')) {
+      case UDP_RES_TYPE.CONTINUOUS:
+        for(let i = 0; i < 3; i++) {
+          server.send(UDP_RES_MSG, 0, UDP_RES_MSG.length, info.port, info.address);
+        }
+        return;
+      case UDP_RES_TYPE.REPEAT_ONCE:
+        server.send(msg, 0, msg.length, info.port, info.address);
+        return;
+      default:
+        console.log('unknown msg');
+    }
   });
 
   return server;
 }
 
-function createUDPAssociate(onMessage) {
-  Socks.createConnection(UDP_ASSOCIATE_OPTIONS, (err, socket, info) => {
+function sendUDPFrame(client, port, host, data) {
+
+  const frame = Socks.createUDPFrame({
+    host: DST_ADDR,
+    port: DST_PORT,
+  }, new Buffer(data));
+
+  client.send(frame, 0, frame.length, port, host);
+}
+
+function createUDPAssociate(onReady, onMessage) {
+  const options = Object.assign({}, {
+    proxy: Object.assign({}, UDP_ASSOCIATE_OPTIONS.proxy),
+    target: Object.assign({}, UDP_ASSOCIATE_OPTIONS.target),
+  });
+
+  Socks.createConnection(options, (err, socket, info) => {
     if (err) {
       console.log('ERR: ', err.stack);
       return;
     }
 
     const client = new dgram.Socket('udp4');
-    const frame = Socks.createUDPFrame({
-      host: DST_ADDR,
-      port: DST_PORT,
-    }, new Buffer('`Hello` from client'));
 
-    client.on('message', onMessage);
+    client.on('message', (msg, info) => {
+      onMessage(msg, info, client);
+    });
 
-    console.log("TRY TO SEND", frame);
-    client.send(frame, 0, frame.length, info.port, info.host);
+    onReady(sendUDPFrame.bind(null, client, info.port, info.host), client);
   });
 }
 
@@ -89,6 +117,7 @@ function createUDPClient() {
 
 module.exports = {
   DST_PORT, DST_ADDR, DST_RES_TEXT,
+  UDP_RES_MSG, UDP_RES_TYPE,
   createHTTPServer,
   createUDPServer,
   createUDPClient,

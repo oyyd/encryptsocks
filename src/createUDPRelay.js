@@ -2,6 +2,7 @@ import dgram from 'dgram';
 import logger from './logger';
 import { getDstInfoFromUDPMsg, inetNtoa, sendDgram } from './utils';
 import LRU from 'lru-cache';
+import * as encryptor from './encryptor';
 
 // SOCKS5 UDP Request
 // +----+------+------+----------+----------+----------+
@@ -74,27 +75,31 @@ function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
 }
 
 export default function createUDPRelay(config, isServer) {
-  const { localPort, serverAddr, serverPort } = config;
+  const {
+    localPort, serverAddr, serverPort,
+    password, method,
+  } = config;
+
+  const encrypt = encryptor.encrypt.bind(null, password, method);
+  const decrypt = encryptor.decrypt.bind(null, password, method);
   // TODO: support udp6
   const socket = dgram.createSocket('udp4');
   const cache = new LRU(LRU_OPTIONS);
   const listenPort = (isServer ? serverPort : localPort);
 
-  socket.on('message', (msg, rinfo) => {
+  socket.on('message', (_msg, rinfo) => {
+    const msg = isServer ? decrypt(_msg) : _msg;
     // TODO: drop
-    logger.warn(`${NAME} receive message: ${msg.toString('hex')}`);
     const dstInfo = getDstInfoFromUDPMsg(msg, isServer);
-    console.log(`${NAME} receive dstInfo`, dstInfo);
     const dstAddrStr = inetNtoa(dstInfo.dstAddr);
     const dstPortNum = dstInfo.dstPort.readUInt16BE();
     const index = getIndex(rinfo, { dstAddrStr, dstPortNum });
-    console.log('enter');
 
     let client = cache.get(index);
 
     if (!client) {
-      client = createClient(dstInfo, incomeMsg => {
-        // TODO: decipher
+      client = createClient(dstInfo, _incomeMsg => {
+        const incomeMsg = (isServer ? encrypt(_incomeMsg) : decrypt(_incomeMsg));
         sendDgram(socket, incomeMsg, rinfo.port, rinfo.address);
       }, () => {
         cache.del(index);
@@ -113,7 +118,7 @@ export default function createUDPRelay(config, isServer) {
       sendDgram(
         client,
         // skip RSV and FLAG
-        msg.slice(3),
+        encrypt(msg.slice(3)),
         serverPort, serverAddr
       );
     }
