@@ -1,4 +1,4 @@
-# shadowsocks-js
+# shadowsocks-js (WIP)
 
 Yet another [shadowsocks implementation in node](https://github.com/shadowsocks/shadowsocks-nodejs).
 
@@ -6,15 +6,23 @@ Yet another [shadowsocks implementation in node](https://github.com/shadowsocks/
 
 ## Requirement
 
-## Usage
+## Install
 
 ```
-node bin/sslocal
+$ npm i -g shadowsocks-js
+```
+
+## CLI
+
+```
+$ sslocal
 ```
 
 ```
-node bin/ssserver
+$ ssserver
 ```
+
+## Encryption methods
 
 ## Test
 
@@ -23,7 +31,7 @@ $ npm i
 $ npm test
 ```
 
-## About the Support to UDP Relay
+## About the support to UDP relay
 
 ## License
 

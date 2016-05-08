@@ -1,8 +1,6 @@
 import { createServer as _createServer, connect } from 'net';
-import {
-  getConfig, getDstInfo, writeOrPause, getArgv,
-} from './utils';
-import logger, { changeLevel } from './logger';
+import { getDstInfo, writeOrPause } from './utils';
+import logger from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
@@ -208,15 +206,7 @@ function createServer(config) {
   };
 }
 
-export function startServer(_config) {
-  const argv = getArgv();
-  const config = _config || getConfig();
-  const level = argv.level || config.level;
-
-  if (level) {
-    changeLevel(logger, level);
-  }
-
+export function startServer(config) {
   const server = createServer(config);
 
   return server;

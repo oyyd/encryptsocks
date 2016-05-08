@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Yet another shadowsocks implementation in node.",
   "main": "./lib/index.js",
+  "bin": {
+    "ssserver": "./bin/ssserver",
+    "sslocal": "./bin/sslocal"
+  },
   "scripts": {
     "build": "babel src --out-dir lib",
     "watch": "babel src --watch --out-dir lib",

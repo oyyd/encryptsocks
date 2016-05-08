@@ -1,27 +1,7 @@
-import minimist from 'minimist';
 import ip from 'ip';
-import config from '../config.json';
-
-const DEFAULT_CONFIG = {
-  serverAddr: '127.0.0.1',
-  serverPort: 8083,
-  localAddr: '127.0.0.1',
-  localPort: 1080,
-  password: 'YOUR_PASSWORD_HERE',
-  timeout: 600,
-  method: 'aes-128-cfb',
-
-  level: 'warn',
-  localAddrIPv6: '::1',
-  serverAddrIPv6: '::1',
-};
 
 export function sendDgram(socket, data, ...args) {
   socket.send(data, 0, data.length, ...args);
-}
-
-export function getArgv() {
-  return minimist(process.argv.slice(2));
 }
 
 export function writeOrPause(fromCon, toCon, data) {
@@ -100,8 +80,26 @@ export function getDstInfoFromUDPMsg(data, isServer) {
   return _getDstInfo(data, offset);
 }
 
-export function getConfig() {
-  return Object.assign({}, DEFAULT_CONFIG, config);
+const formatKeyValues = {
+  server: 'serverAddr',
+  server_port: 'serverPort',
+  local_addr: 'localAddr',
+  local_port: 'localPort',
+  local_addr_ipv6: 'localAddrIPv6',
+  server_addr_ipv6: 'serverAddrIPv6',
+};
+
+export function formatConfig(_config) {
+  const formattedConfig = Object.assign({}, _config);
+
+  Object.keys(formatKeyValues).forEach(key => {
+    if (formattedConfig.hasOwnProperty(key)) {
+      formattedConfig[formatKeyValues[key]] = formattedConfig[key];
+      delete formattedConfig[key];
+    }
+  });
+
+  return formattedConfig;
 }
 
 export function getDstStr(dstInfo) {
