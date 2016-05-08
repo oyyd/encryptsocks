@@ -1,4 +1,4 @@
-import { startServer } from './ssserver';
+import { startServer } from './ssServer';
 import logger, { changeLevel } from './logger';
 
 process.on('message', config => {
