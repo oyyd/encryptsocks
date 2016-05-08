@@ -4,6 +4,7 @@ const shttp = require('socks5-http-client');
 const shttps = require('socks5-https-client');
 const http = require('http');
 const assert = require('assert');
+const ip = require('ip');
 
 const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
@@ -39,7 +40,7 @@ describe('getDstInfo', () => {
 
     strictEqual(dstInfo.atyp, 0x01);
     strictEqual(dstInfo.dstAddrLength, 4);
-    strictEqual(utils.inetNtoa(dstInfo.dstAddr), '127.0.0.1');
+    strictEqual(ip.toString(dstInfo.dstAddr), '127.0.0.1');
     strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
   });
 
@@ -51,7 +52,7 @@ describe('getDstInfo', () => {
 
     strictEqual(dstInfo.atyp, 0x04);
     strictEqual(dstInfo.dstAddrLength, 16);
-    strictEqual(utils.inetNtoa(dstInfo.dstAddr), '0:0:0:0:0:0:0:1');
+    strictEqual(ip.toString(dstInfo.dstAddr), '::1');
     strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
   });
 
@@ -124,11 +125,25 @@ describe('http proxy', () => {
   it('should get correct response when the `atyp` is `domain`', function(cb) {
     this.timeout(TIMEOUT);
 
+    let success = false;
+
     shttp.get('http://example.com', res => {
       res.on('readable', () => {
-        let text = res.read().toString('utf8');
-        assert(!!~text.indexOf('Example Domain'));
-        cb();
+        let text = res.read();
+
+        if (text) {
+          text = text.toString('utf8');
+          if (~text.indexOf('Example Domain')) {
+            success = true;
+            cb();
+          }
+        }
+      });
+
+      res.on('close', () => {
+        if (!success) {
+          cb(new Error('failed'));
+        }
       });
     });
   });

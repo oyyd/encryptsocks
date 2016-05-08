@@ -6,5 +6,8 @@
   "password": "holic123",
   "timeout": 600,
   "method": "aes-256-cfb",
-  "level": "warn"
+
+  "level": "verbose",
+  "localAddrIPv6": "::1",
+  "serverAddrIPv6": "::1"
 }

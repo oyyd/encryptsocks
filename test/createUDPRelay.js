@@ -23,14 +23,16 @@ describe('UDP Relay', () => {
   let dstServer;
   let ssLocalServer;
   let ssServerServer;
+  let dstServerUDP6;
 
   before(() => {
     ssLocalServer = ssLocal.startServer();
     ssServerServer = ssServer.startServer();
     dstServer = createUDPServer();
+    dstServerUDP6 = createUDPServer('udp6');
   });
 
-  it('should work in for UDP association and receive message repeately', function(cb) {
+  it('should work for UDP association and receive message repeately', function(cb) {
     this.timeout(5000);
 
     let EXPECTED_TIME = 3;
@@ -50,7 +52,7 @@ describe('UDP Relay', () => {
     });
   });
 
-  it('should work in for UDP association', function(cb) {
+  it('should work for UDP association', function(cb) {
     this.timeout(5000);
 
     let EXPECTED_TIME = 3;
@@ -74,8 +76,33 @@ describe('UDP Relay', () => {
     });
   });
 
+  it('should work for UDP association for UDP6', function(cb) {
+    this.timeout(5000);
+
+    let EXPECTED_TIME = 3;
+    let count = 0;
+
+    createUDPAssociate((sendToDST) => {
+      let i;
+
+      for (i = 0; i <= EXPECTED_TIME; i++) {
+        sendToDST(UDP_RES_TYPE.REPEAT_ONCE);
+      }
+    }, (msg, info, client) => {
+      assert(msg.toString(), UDP_RES_TYPE.REPEAT_ONCE);
+
+      count ++;
+
+      if (count === EXPECTED_TIME){
+        client.close();
+        cb();
+      }
+    }, true);
+  });
+
   after(() => {
     dstServer.close();
+    dstServerUDP6.close();
     ssLocalServer.server.close();
     ssLocalServer.udpRelay.close();
     ssServerServer.server.close();

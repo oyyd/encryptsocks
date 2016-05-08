@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import minimist from 'minimist';
+import ip from 'ip';
 
 export function sendDgram(socket, data, ...args) {
   socket.send(data, 0, data.length, ...args);
@@ -87,39 +88,6 @@ export function getDstInfoFromUDPMsg(data, isServer) {
   return _getDstInfo(data, offset);
 }
 
-export function inetNtoa(buf) {
-  switch (buf.length) {
-    case 4:
-      return `${buf[0]}.${buf[1]}.${buf[2]}.${buf[3]}`;
-    case 16: {
-      let i;
-      let res = '';
-
-      for (i = 0; i < 16; i += 2) {
-        res = `${res}:${buf.readUInt16BE(i)}`;
-      }
-
-      return res.slice(1);
-    } default:
-      return null;
-  }
-}
-
-export function inetAton(ipStr) {
-  const parts = ipStr.split('.');
-  if (parts.length !== 4) {
-    return null;
-  }
-
-  const buf = new Buffer(4);
-
-  parts.forEach((part, i) => {
-    buf[i] = part;
-  });
-
-  return buf;
-}
-
 export function getConfig() {
   return JSON.parse(readFileSync(join(__dirname, '../config.json')));
 }
@@ -132,7 +100,7 @@ export function getDstStr(dstInfo) {
   switch (dstInfo.atyp) {
     case 1:
     case 4:
-      return `${inetNtoa(dstInfo.dstAddr)}:${dstInfo.dstPort.readUInt16BE()}`;
+      return `${ip.toString(dstInfo.dstAddr)}:${dstInfo.dstPort.readUInt16BE()}`;
     case 3:
       return `${dstInfo.dstAddr.toString('utf8')}:${dstInfo.dstPort.readUInt16BE()}`;
     default:

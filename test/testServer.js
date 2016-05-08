@@ -4,10 +4,12 @@ const http = require('http');
 const https = require('https');
 const dgram = require('dgram');
 const Socks = require('socks');
+const ip = require('ip');
 const config = require('../config.json');
 
 const DST_RES_TEXT = 'hello world!';
 const DST_ADDR = '127.0.0.1';
+const DST_ADDR_IPV6 = '::1';
 const DST_PORT = 42134;
 const SOCKS_PORT = config.localPort;
 
@@ -36,16 +38,13 @@ function createHTTPServer(cb) {
   }).listen(DST_PORT, cb);
 }
 
-function createHTTPSServer() {
-  //TODO:
-}
-
-function createUDPServer() {
-  const server = dgram.createSocket('udp4');
+function createUDPServer(udpType) {
+  udpType = udpType || 'udp4';
+  const server = dgram.createSocket(udpType);
 
   let msgTimer;
 
-  server.bind(DST_PORT, DST_ADDR);
+  server.bind(DST_PORT, udpType === 'udp4' ? DST_ADDR : DST_ADDR_IPV6);
 
   server.on('message', (msg, info) => {
     switch (msg.toString('utf8')) {
@@ -65,20 +64,28 @@ function createUDPServer() {
   return server;
 }
 
-function sendUDPFrame(client, port, host, data) {
+function sendUDPFrame(client, port, _host, options, data) {
+  const targetHost = (typeof options.target.host === 'string'
+    ? options.target.host : ip.toString(options.target.host));
+  const targetPort = options.target.port;
+  const host = (typeof _host === 'string'
+    ? _host : ip.toString(_host));
 
   const frame = Socks.createUDPFrame({
-    host: DST_ADDR,
-    port: DST_PORT,
+    host: targetHost,
+    port: targetPort,
   }, new Buffer(data));
 
   client.send(frame, 0, frame.length, port, host);
 }
 
-function createUDPAssociate(onReady, onMessage) {
+function createUDPAssociate(onReady, onMessage, isUDP6) {
+  // NOTE: the `socks` lib will unexpectly mutate the options.
   const options = Object.assign({}, {
     proxy: Object.assign({}, UDP_ASSOCIATE_OPTIONS.proxy),
-    target: Object.assign({}, UDP_ASSOCIATE_OPTIONS.target),
+    target: Object.assign({}, UDP_ASSOCIATE_OPTIONS.target, (isUDP6 ? {
+      host: '::1',
+    } : null)),
   });
 
   Socks.createConnection(options, (err, socket, info) => {
@@ -87,18 +94,19 @@ function createUDPAssociate(onReady, onMessage) {
       return;
     }
 
-    const client = new dgram.Socket('udp4');
+    const client = dgram.createSocket(isUDP6 ? 'udp6' : 'udp4');
 
     client.on('message', (msg, info) => {
       onMessage(msg, info, client);
     });
 
-    onReady(sendUDPFrame.bind(null, client, info.port, info.host), client);
+    onReady(sendUDPFrame.bind(null, client, info.port, info.host, options));
   });
 }
 
-function createUDPClient() {
-  const server = dgram.createSocket('udp4');
+function createUDPClient(udpType) {
+  udpType = udpType || 'udp4';
+  const server = dgram.createSocket(udpType);
   const MSG = 'Hello';
 
   let msgTimer;

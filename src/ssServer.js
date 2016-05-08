@@ -1,10 +1,11 @@
 import { createServer as _createServer, connect } from 'net';
 import {
-  getConfig, getDstInfo, inetNtoa, writeOrPause, getArgv,
+  getConfig, getDstInfo, writeOrPause, getArgv,
 } from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
+import ip from 'ip';
 
 const NAME = 'ssServer';
 
@@ -42,7 +43,7 @@ function createClientToDst(
   clientOptions = {
     port: dstInfo.dstPort.readUInt16BE(),
     host: (dstInfo.atyp === 3
-      ? dstInfo.dstAddr.toString('ascii') : inetNtoa(dstInfo.dstAddr)),
+      ? dstInfo.dstAddr.toString('ascii') : ip.toString(dstInfo.dstAddr)),
   };
 
   clientToDst = connect(clientOptions, onConnect);

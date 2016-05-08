@@ -1,8 +1,9 @@
 import dgram from 'dgram';
 import logger from './logger';
-import { getDstInfoFromUDPMsg, inetNtoa, sendDgram } from './utils';
+import { getDstInfoFromUDPMsg, sendDgram } from './utils';
 import LRU from 'lru-cache';
 import * as encryptor from './encryptor';
+import ip from 'ip';
 
 // SOCKS5 UDP Request
 // +----+------+------+----------+----------+----------+
@@ -50,6 +51,7 @@ const LRU_OPTIONS = {
     }
   },
 };
+const SOCKET_TYPE = ['udp4', 'udp6'];
 
 // TODO: do we actually need multiple client sockets?
 // TODO: remove invalid clients
@@ -59,7 +61,6 @@ function getIndex({ address, port }, { dstAddrStr, dstPortNum }) {
 }
 
 function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
-  // TODO: what about domain type
   const udpType = (atyp === 1 ? 'udp4' : 'udp6');
   const socket = dgram.createSocket(udpType);
 
@@ -74,24 +75,25 @@ function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
   return socket;
 }
 
-export default function createUDPRelay(config, isServer) {
+function _createUDPRelay(udpType, config, isServer) {
   const {
-    localPort, serverAddr, serverPort,
+    localPort, serverPort,
     password, method,
   } = config;
+  const serverAddr = udpType === 'udp4' ? config.serverAddr : config.serverAddrIPv6;
 
   const encrypt = encryptor.encrypt.bind(null, password, method);
   const decrypt = encryptor.decrypt.bind(null, password, method);
-  // TODO: support udp6
-  const socket = dgram.createSocket('udp4');
+  const socket = dgram.createSocket(udpType);
   const cache = new LRU(LRU_OPTIONS);
   const listenPort = (isServer ? serverPort : localPort);
 
   socket.on('message', (_msg, rinfo) => {
     const msg = isServer ? decrypt(_msg) : _msg;
+    logger.debug(`${NAME} receive message: ${msg.toString('hex')}`);
     // TODO: drop
     const dstInfo = getDstInfoFromUDPMsg(msg, isServer);
-    const dstAddrStr = inetNtoa(dstInfo.dstAddr);
+    const dstAddrStr = ip.toString(dstInfo.dstAddr);
     const dstPortNum = dstInfo.dstPort.readUInt16BE();
     const index = getIndex(rinfo, { dstAddrStr, dstPortNum });
 
@@ -108,7 +110,6 @@ export default function createUDPRelay(config, isServer) {
     }
 
     // TODO: after connected
-    // TODO: cipher
     if (isServer) {
       sendDgram(
         client, msg.slice(dstInfo.totalLength),
@@ -138,4 +139,20 @@ export default function createUDPRelay(config, isServer) {
   });
 
   return socket;
+}
+
+function close(sockets) {
+  sockets.forEach(socket => {
+    if (socket) {
+      socket.close();
+    }
+  });
+}
+
+export default function createUDPRelay(config, isServer) {
+  const sockets = SOCKET_TYPE.map(udpType => _createUDPRelay(udpType, config, isServer));
+  return {
+    sockets,
+    close: close.bind(null, sockets),
+  };
 }
