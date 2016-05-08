@@ -2,12 +2,12 @@
   "serverAddr": "127.0.0.1",
   "serverPort": 8083,
   "localAddr": "127.0.0.1",
-  "localPort": 1088,
+  "localPort": 1080,
   "password": "holic123",
   "timeout": 600,
   "method": "aes-256-cfb",
 
-  "level": "verbose",
+  "level": "warn",
   "localAddrIPv6": "::1",
   "serverAddrIPv6": "::1"
 }

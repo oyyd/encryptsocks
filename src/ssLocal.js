@@ -4,9 +4,9 @@ import {
 } from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
-import { filter } from './filter';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
+// import { filter } from './filter';
 
 const NAME = 'ssLocal';
 
@@ -47,9 +47,7 @@ function handleRequest(
   };
   const isUDPRelay = (cmd === 0x03);
 
-  // TODO: most dst infos are not used
   let repBuf;
-  let clientToRemote;
   let tmp = null;
   let decipher = null;
   let decipheredData = null;
@@ -84,7 +82,7 @@ function handleRequest(
     connection.write(repBuf);
 
     return {
-      stage: 10,
+      stage: -1,
     };
   }
 
@@ -94,25 +92,19 @@ function handleRequest(
   repBuf = new Buffer(10);
   repBuf.writeUInt32BE(0x05000001);
   repBuf.writeUInt32BE(0x00000000, 4, 4);
-  // TODO: should this be 0x0000?
-  repBuf.writeUInt16BE(2222, 8, 2);
+  repBuf.writeUInt16BE(0, 8, 2);
 
   tmp = createCipher(password, method,
     data.slice(3)); // skip VER, CMD, RSV
-  // logger.warn(data.slice(3).toString('hex'));
   cipher = tmp.cipher;
   cipheredData = tmp.data;
 
   // connect
-
-  clientToRemote = connect(clientOptions, () => {
-    // TODO: no sence?
+  const clientToRemote = connect(clientOptions, () => {
     onConnect();
   });
 
-  // TODO: should pause until the replay finished
   clientToRemote.on('data', remoteData => {
-    // TODO:
     if (!decipher) {
       tmp = createDecipher(password, method, remoteData);
       decipher = tmp.decipher;
@@ -155,7 +147,6 @@ function handleRequest(
   logger.debug(`2. TRY TO WRITE: ${repBuf.toString('hex')}`);
   connection.write(repBuf);
 
-  // TODO: write before connected
   writeOrPause(connection, clientToRemote, cipheredData);
 
   return {
@@ -192,14 +183,13 @@ function handleConnection(config, connection) {
           return;
         }
 
-        // TODO:
-        if (!filter(dstInfo)) {
-          // TODO: clean everything
-          connection.end();
-          connection.destroy();
-          stage = -1;
-          return;
-        }
+        // if (!filter(dstInfo)) {
+        //   // TODO: clean everything
+        //   connection.end();
+        //   connection.destroy();
+        //   stage = -1;
+        //   return;
+        // }
 
         logger.debug(`ssLocal at stage ${stage} received data `
           + `from client: ${data.toString('hex')}`);
@@ -218,9 +208,12 @@ function handleConnection(config, connection) {
         if (stage === 2) {
           clientToRemote = tmp.clientToRemote;
           cipher = tmp.cipher;
+        } else {
+          // udp relay
+          clientConnected = false;
+          connection.end();
         }
 
-        // TODO: should destroy everything for UDP relay?
         break;
       case 2:
         tmp = cipher.update(data);
@@ -260,12 +253,19 @@ function handleConnection(config, connection) {
   });
 
   connection.on('error', e => {
-    logger.warn(`ssLocal error happened in client connection: ${e.message}`);
+    logger.warn(`${NAME} error happened in client connection: ${e.message}`);
   });
 
-  if (stage === -1) {
-    connection.destroy();
-  }
+  setTimeout(() => {
+    logger.warn(`${NAME} connection timeout.`);
+    if (clientConnected) {
+      connection.destroy();
+    }
+
+    if (remoteConnected) {
+      clientToRemote.destroy();
+    }
+  }, config.timeout * 1000);
 }
 
 function createServer(config) {
@@ -273,12 +273,11 @@ function createServer(config) {
   const udpRelay = createUDPRelay(config, false);
 
   server.on('close', () => {
-    // TODO:
+    logger.warn(`${NAME} server closed`);
   });
 
   server.on('error', e => {
-    // TODO:
-    logger.warn(`ssLocal server error: ${e.message}`);
+    logger.error(`${NAME} server error: ${e.message}`);
   });
 
   server.listen(config.localPort);
@@ -289,16 +288,15 @@ function createServer(config) {
   };
 }
 
-export function startServer() {
+export function startServer(_config) {
   const argv = getArgv();
-  const config = getConfig();
+  const config = _config || getConfig();
   const level = argv.level || config.level;
 
   if (level) {
     changeLevel(logger, level);
   }
 
-  // TODO: throw when the port is occupied
   const server = createServer(config);
 
   return server;

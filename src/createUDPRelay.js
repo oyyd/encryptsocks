@@ -42,7 +42,7 @@ import ip from 'ip';
 
 const NAME = 'UDP relay';
 const LRU_OPTIONS = {
-  max: 100,
+  max: 1000,
   maxAge: 10 * 1000,
   dispose: (key, socket) => {
     // close socket if it's not closed
@@ -52,9 +52,6 @@ const LRU_OPTIONS = {
   },
 };
 const SOCKET_TYPE = ['udp4', 'udp6'];
-
-// TODO: do we actually need multiple client sockets?
-// TODO: remove invalid clients
 
 function getIndex({ address, port }, { dstAddrStr, dstPortNum }) {
   return `${address}:${port}_${dstAddrStr}:${dstPortNum}`;
@@ -85,31 +82,41 @@ function _createUDPRelay(udpType, config, isServer) {
   const encrypt = encryptor.encrypt.bind(null, password, method);
   const decrypt = encryptor.decrypt.bind(null, password, method);
   const socket = dgram.createSocket(udpType);
-  const cache = new LRU(LRU_OPTIONS);
+  const cache = new LRU(Object.assign({}, LRU_OPTIONS, {
+    maxAge: config.timeout * 1000,
+  }));
   const listenPort = (isServer ? serverPort : localPort);
 
   socket.on('message', (_msg, rinfo) => {
     const msg = isServer ? decrypt(_msg) : _msg;
-    logger.debug(`${NAME} receive message: ${msg.toString('hex')}`);
-    // TODO: drop
+    const frag = msg[2];
+
+    if (frag !== 0) {
+      // drop those datagram that using frag
+      return;
+    }
+
     const dstInfo = getDstInfoFromUDPMsg(msg, isServer);
     const dstAddrStr = ip.toString(dstInfo.dstAddr);
     const dstPortNum = dstInfo.dstPort.readUInt16BE();
     const index = getIndex(rinfo, { dstAddrStr, dstPortNum });
 
+    logger.debug(`${NAME} receive message: ${msg.toString('hex')}`);
+
     let client = cache.get(index);
 
     if (!client) {
       client = createClient(dstInfo, _incomeMsg => {
+        // socket on message
         const incomeMsg = (isServer ? encrypt(_incomeMsg) : decrypt(_incomeMsg));
         sendDgram(socket, incomeMsg, rinfo.port, rinfo.address);
       }, () => {
+        // socket on close
         cache.del(index);
       });
       cache.set(index, client);
     }
 
-    // TODO: after connected
     if (isServer) {
       sendDgram(
         client, msg.slice(dstInfo.totalLength),

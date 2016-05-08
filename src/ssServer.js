@@ -9,44 +9,33 @@ import ip from 'ip';
 
 const NAME = 'ssServer';
 
-function flushPreservedData(connection, clientToDst, dataArr) {
-  let i = dataArr.length;
-
-  while (i > 0) {
-    i--;
-    writeOrPause(connection, clientToDst, dataArr[i]);
-  }
-
-  dataArr.length = 0;
-}
-
 function createClientToDst(
-  connection, data, preservedData,
+  connection, data,
   password, method, onConnect, isLocalConnected
 ) {
   const dstInfo = getDstInfo(data, true);
 
-  let clientToDst;
-  let clientOptions;
   let cipher = null;
   let tmp;
   let cipheredData;
+  let preservedData = null;
 
   if (!dstInfo) {
+    logger.warn(`${NAME} receive invalid msg.`);
     return null;
   }
 
-  if (dstInfo.totalLength < data.length) {
-    preservedData.push(data.slice(dstInfo.totalLength));
-  }
-
-  clientOptions = {
+  const clientOptions = {
     port: dstInfo.dstPort.readUInt16BE(),
     host: (dstInfo.atyp === 3
       ? dstInfo.dstAddr.toString('ascii') : ip.toString(dstInfo.dstAddr)),
   };
 
-  clientToDst = connect(clientOptions, onConnect);
+  if (dstInfo.totalLength < data.length) {
+    preservedData = data.slice(dstInfo.totalLength);
+  }
+
+  const clientToDst = connect(clientOptions, onConnect);
 
   clientToDst.on('data', clientData => {
     logger.debug(`server received data from DST:${clientData.toString('ascii')}`);
@@ -90,13 +79,12 @@ function createClientToDst(
     }
   });
 
-  return clientToDst;
+  return {
+    clientToDst, preservedData,
+  };
 }
 
 function handleConnection(config, connection) {
-  // TODO: is this necessary?
-  const preservedData = [];
-
   let stage = 0;
   let clientToDst = null;
   let decipher = null;
@@ -126,8 +114,8 @@ function handleConnection(config, connection) {
         // TODO: should pause? or preserve data?
         connection.pause();
 
-        clientToDst = createClientToDst(
-          connection, data, preservedData,
+        tmp = createClientToDst(
+          connection, data,
           config.password, config.method,
           () => {
             dstConnected = true;
@@ -136,13 +124,16 @@ function handleConnection(config, connection) {
           () => localConnected
         );
 
-        if (!clientToDst) {
-          // TODO: throw
+        if (!tmp) {
           connection.destroy();
           return;
         }
 
-        flushPreservedData(connection, clientToDst, preservedData);
+        clientToDst = tmp.clientToDst;
+
+        if (tmp.preservedData) {
+          writeOrPause(connection, clientToDst, tmp.preservedData);
+        }
 
         stage = 1;
         break;
@@ -157,8 +148,6 @@ function handleConnection(config, connection) {
     }
   });
 
-  // TODO: setTimeout to close sockets
-
   connection.on('drain', () => {
     clientToDst.resume();
   });
@@ -172,7 +161,7 @@ function handleConnection(config, connection) {
   });
 
   connection.on('error', e => {
-    logger.warn(`ssServer error happened in the connection with ssLocal : ${e.message}`);
+    logger.error(`ssServer error happened in the connection with ssLocal : ${e.message}`);
   });
 
   connection.on('close', e => {
@@ -186,11 +175,31 @@ function handleConnection(config, connection) {
       }
     }
   });
+
+  setTimeout(() => {
+    logger.warn(`${NAME} connection timeout.`);
+
+    if (localConnected) {
+      connection.destroy();
+    }
+
+    if (dstConnected) {
+      clientToDst.destroy();
+    }
+  }, config.timeout * 1000);
 }
 
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config)).listen(config.serverPort);
   const udpRelay = createUDPRelay(config, true);
+
+  server.on('close', () => {
+    logger.warn(`${NAME} server closed`);
+  });
+
+  server.on('error', e => {
+    logger.error(`${NAME} server error: ${e.message}`);
+  });
 
   logger.verbose(`${NAME} is listening on ${config.serverAddr}:${config.serverPort}`);
 
@@ -199,16 +208,15 @@ function createServer(config) {
   };
 }
 
-export function startServer() {
+export function startServer(_config) {
   const argv = getArgv();
-  const config = getConfig();
+  const config = _config || getConfig();
   const level = argv.level || config.level;
 
   if (level) {
     changeLevel(logger, level);
   }
 
-  // TODO: port occupied
   const server = createServer(config);
 
   return server;

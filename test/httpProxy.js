@@ -10,8 +10,11 @@ const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
-const config = require('../config.json');
+const _config = require('../config.json');
 
+const config = Object.assign({}, _config, {
+  'level': 'error',
+});
 const strictEqual = assert.strictEqual;
 const getDstInfo = utils.getDstInfo;
 const DST_RES_TEXT = testServer.DST_RES_TEXT;
@@ -79,8 +82,8 @@ describe('http proxy', () => {
   let ssServerServer;
 
   before(cb => {
-    ssLocalServer = ssLocal.startServer();
-    ssServerServer = ssServer.startServer();
+    ssLocalServer = ssLocal.startServer(config);
+    ssServerServer = ssServer.startServer(config);
     dstServer = createHTTPServer(cb);
   });
 

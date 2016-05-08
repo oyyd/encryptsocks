@@ -6,6 +6,11 @@ const utils = require('../lib/utils');
 const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
+const _config = require('../config.json');
+
+const config = Object.assign({}, _config, {
+  'level': 'error',
+});
 
 const strictEqual = assert.strictEqual;
 const DST_RES_TEXT = testServer.DST_RES_TEXT;
@@ -26,8 +31,8 @@ describe('UDP Relay', () => {
   let dstServerUDP6;
 
   before(() => {
-    ssLocalServer = ssLocal.startServer();
-    ssServerServer = ssServer.startServer();
+    ssLocalServer = ssLocal.startServer(config);
+    ssServerServer = ssServer.startServer(config);
     dstServer = createUDPServer();
     dstServerUDP6 = createUDPServer('udp6');
   });
