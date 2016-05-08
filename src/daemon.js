@@ -33,6 +33,8 @@ function forkProcess(config, filePath, _restartTime) {
 export default function daemon(filePath) {
   const { generalOptions, proxyOptions } = getConfig();
 
+  console.log(generalOptions, proxyOptions);
+
   if (generalOptions.help) {
     logHelp();
   } else {

@@ -1,6 +1,7 @@
 import minimist from 'minimist';
 import DEFAULT_CONFIG from './defaultConfig';
 import { version } from '../package.json';
+import fileConfig from '../config.json';
 
 const PROXY_ARGUMENT_PAIR = {
   s: 'serverAddr',
@@ -50,7 +51,7 @@ export function getConfig() {
   const { generalOptions, proxyOptions } = getArgvOptions();
   const res = {
     generalOptions,
-    proxyOptions: Object.assign({}, DEFAULT_CONFIG, proxyOptions),
+    proxyOptions: Object.assign({}, DEFAULT_CONFIG, fileConfig, proxyOptions),
   };
 
   return res;

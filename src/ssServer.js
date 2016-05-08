@@ -19,7 +19,8 @@ function createClientToDst(
   let preservedData = null;
 
   if (!dstInfo) {
-    logger.warn(`${NAME} receive invalid msg.`);
+    logger.warn(`${NAME} receive invalid msg. `
+      + 'local method/password doesn\'t accord with the server\'s?');
     return null;
   }
 
