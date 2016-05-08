@@ -63,11 +63,11 @@ shadowsock-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:
-  -s SERVER_ADDR         server address, default: 0.0.0.0
-  -p SERVER_PORT         server port, default: 8388
+  -s SERVER_ADDR         server address, default: 127.0.0.1
+  -p SERVER_PORT         server port, default: 8083
   -k PASSWORD            password
-  -m METHOD              encryption method, default: aes-256-cfb
-  -t TIMEOUT             timeout in seconds, default: 300
+  -m METHOD              encryption method, default: aes-128-cfb
+  -t TIMEOUT             timeout in seconds, default: 600
 
 General options:
   -h, --help             show this help message and exit

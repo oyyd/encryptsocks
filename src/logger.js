@@ -6,7 +6,7 @@ const DEFAULT_COMMON_OPTIONS = {
   timestamp: true,
 };
 const DEFAULT_FILE_OPTIONS = {
-  filename: 'log.log',
+  filename: '/var/log/shadowsocksjs.log',
 };
 
 function createLogData(level) {

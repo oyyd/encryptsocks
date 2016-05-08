@@ -1,6 +1,6 @@
 # shadowsocks-js (WIP)
 
-Yet another [shadowsocks implementation in node](https://github.com/shadowsocks/shadowsocks-nodejs).
+Yet another implementation of [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs).
 
 ## Features
 
