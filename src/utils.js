@@ -1,7 +1,20 @@
-import { join } from 'path';
-import { readFileSync } from 'fs';
 import minimist from 'minimist';
 import ip from 'ip';
+import config from '../config.json';
+
+const DEFAULT_CONFIG = {
+  serverAddr: '127.0.0.1',
+  serverPort: 8083,
+  localAddr: '127.0.0.1',
+  localPort: 1080,
+  password: 'YOUR_PASSWORD_HERE',
+  timeout: 600,
+  method: 'aes-128-cfb',
+
+  level: 'warn',
+  localAddrIPv6: '::1',
+  serverAddrIPv6: '::1',
+};
 
 export function sendDgram(socket, data, ...args) {
   socket.send(data, 0, data.length, ...args);
@@ -75,7 +88,6 @@ export function getDstInfo(data, isServer) {
   return _getDstInfo(data, offset);
 }
 
-// TODO: same
 export function getDstInfoFromUDPMsg(data, isServer) {
   // +----+------+------+----------+----------+----------+
   // |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
@@ -89,7 +101,7 @@ export function getDstInfoFromUDPMsg(data, isServer) {
 }
 
 export function getConfig() {
-  return JSON.parse(readFileSync(join(__dirname, '../config.json')));
+  return Object.assign({}, DEFAULT_CONFIG, config);
 }
 
 export function getDstStr(dstInfo) {

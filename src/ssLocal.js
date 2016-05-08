@@ -38,7 +38,7 @@ function handleRequest(
   connection, data,
   { serverAddr, serverPort, password, method, localAddr, localPort,
     localAddrIPv6 },
-  dstInfo, onConnect, isClientConnected
+  dstInfo, onConnect, onError, isClientConnected
 ) {
   const cmd = data[1];
   const clientOptions = {
@@ -107,13 +107,16 @@ function handleRequest(
   clientToRemote.on('data', remoteData => {
     if (!decipher) {
       tmp = createDecipher(password, method, remoteData);
+      if (!tmp) {
+        logger.warn(`${NAME} ssLocal get invalid msg`);
+      }
       decipher = tmp.decipher;
       decipheredData = tmp.data;
     } else {
       decipheredData = decipher.update(remoteData);
     }
 
-    logger.debug(`ssLocal received data from remote: ${decipheredData.toString('hex')}`);
+    logger.debug(`${NAME} received data from remote: ${decipheredData.toString('hex')}`);
 
     if (isClientConnected()) {
       writeOrPause(clientToRemote, connection, decipheredData);
@@ -199,6 +202,18 @@ function handleConnection(config, connection) {
           () => {
             // after connected
             remoteConnected = true;
+          },
+          () => {
+            // get invalid msg
+            if (remoteConnected) {
+              remoteConnected = false;
+              clientToRemote.destroy();
+            }
+
+            if (clientConnected) {
+              clientConnected = false;
+              connection.destroy();
+            }
           },
           () => clientConnected
         );
