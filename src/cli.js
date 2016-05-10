@@ -1,6 +1,7 @@
 import path from 'path';
 import minimist from 'minimist';
 import { spawn } from 'child_process';
+import { readFileSync, accessSync } from 'fs';
 
 import DEFAULT_CONFIG from './defaultConfig';
 import { version } from '../package.json';
@@ -10,6 +11,7 @@ import * as ssServer from './ssServer';
 import { getPid, writePidFile, deletePidFile } from './pid';
 
 const PROXY_ARGUMENT_PAIR = {
+  c: 'configFilePath',
   s: 'serverAddr',
   p: 'serverPort',
   l: 'localAddr',
@@ -100,14 +102,30 @@ function getArgvOptions(argv) {
   };
 }
 
+function readConfig(_filePath) {
+  if (!_filePath) {
+    return null;
+  }
+
+  const filePath = path.join(process.cwd(), _filePath);
+
+  try {
+    accessSync(filePath);
+  } catch (e) {
+    throw new Error(`failed to find config file in: ${filePath}`);
+  }
+
+  return JSON.parse(readFileSync(filePath));
+}
+
 export function getConfig(argv) {
   const { generalOptions, proxyOptions, invalidOption } = getArgvOptions(argv);
-  const res = {
-    generalOptions, invalidOption,
-    proxyOptions: Object.assign({}, DEFAULT_CONFIG, fileConfig, proxyOptions),
-  };
+  const specificFileConfig = readConfig(proxyOptions.configFilePath) || fileConfig;
 
-  return res;
+  return {
+    generalOptions, invalidOption,
+    proxyOptions: Object.assign({}, DEFAULT_CONFIG, specificFileConfig, proxyOptions),
+  };
 }
 
 function logHelp(invalidOption) {
@@ -117,6 +135,7 @@ ${(invalidOption ? `${invalidOption}\n` : null)}shadowsock-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:
+  -c config              path to config file
   -s SERVER_ADDR         server address, default: 127.0.0.1
   -p SERVER_PORT         server port, default: 8083
   -l LOCAL_ADDR          local binding address, default: 127.0.0.1
@@ -125,10 +144,10 @@ Proxy options:
   -m METHOD              encryption method, default: aes-128-cfb
   -t TIMEOUT             timeout in seconds, default: 600
   --level LOG_LEVEL      log level, default: warn
+                         example: --level verbose
 General options:
   -h, --help             show this help message and exit
   -d start/stop/restart  daemon mode
-  -v, --verbose
 `
   );
 }

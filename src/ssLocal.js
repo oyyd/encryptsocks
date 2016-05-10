@@ -1,9 +1,9 @@
+import ip from 'ip';
 import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause, getDstStr } from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
-import ip from 'ip';
 // import { filter } from './filter';
 
 const NAME = 'ssLocal';

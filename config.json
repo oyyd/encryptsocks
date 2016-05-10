@@ -4,10 +4,10 @@
   "localAddr": "127.0.0.1",
   "localPort": 1080,
   "password": "holic123",
-  "timeout": 600,
+  "timeout": 60,
   "method": "aes-128-cfb",
 
-  "level": "verbose",
+  "level": "warn",
   "localAddrIPv6": "::1",
   "serverAddrIPv6": "::1"
 }
