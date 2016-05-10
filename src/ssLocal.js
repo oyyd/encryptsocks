@@ -1,6 +1,6 @@
 import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause, getDstStr } from './utils';
-import logger from './logger';
+import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
@@ -303,6 +303,17 @@ function createServer(config) {
 
 export function startServer(config) {
   const server = createServer(config);
+  const level = config.level;
+
+  if (level) {
+    changeLevel(logger, level);
+  }
 
   return server;
+}
+
+if (module === require.main) {
+  process.on('message', config => {
+    startServer(config);
+  });
 }

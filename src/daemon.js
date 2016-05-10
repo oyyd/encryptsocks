@@ -1,14 +1,23 @@
+import { join } from 'path';
 import { fork } from 'child_process';
 import logger from './logger';
 import { getConfig } from './cli';
+import { deletePidFile } from './pid';
 
 const NAME = 'daemon';
 const MAX_RESTART_TIME = 5;
 
-function forkProcess(config, filePath, _restartTime) {
+let child = null;
+
+export const FORK_FILE_PATH = {
+  local: join(__dirname, 'ssLocal'),
+  server: join(__dirname, 'ssServer'),
+};
+
+function daemon(type, config, filePath, _restartTime) {
   let restartTime = _restartTime || 0;
 
-  const child = fork(filePath);
+  child = fork(filePath);
 
   child.send(config);
 
@@ -22,44 +31,27 @@ function forkProcess(config, filePath, _restartTime) {
     child.kill('SIGKILL');
 
     if (restartTime < MAX_RESTART_TIME) {
-      forkProcess(config, filePath, restartTime + 1);
+      daemon(type, config, filePath, restartTime + 1);
     } else {
       logger.error(`${NAME}: restarted too many times, will close.`);
+      deletePidFile(type);
       process.exit(1);
     }
   });
 }
 
-export default function daemon(filePath) {
-  const { proxyOptions } = getConfig();
-
-  forkProcess(proxyOptions, filePath);
-}
-
-console.log('yes');
-
-try {
-  if (module === require.main) {
-    const type = process.argv[2];
-    const argv = process.argv.slice(3);
-    const { proxyOptions } = getConfig(argv);
-
-    console.log('yes');
-
-    process.on('message', msg => {
-      console.log(`daemon get msg: ${msg}`);
-      require('fs').writeFileSync('./test.txt', msg);
-    });
-
-    setTimeout(() => {
-
-    }, 1000000000);
+process.on('SIGHUP', () => {
+  if (child) {
+    child.kill('SIGKILL');
   }
+  deletePidFile();
+  process.exit(0);
+});
 
-  setTimeout(() => {
+if (module === require.main) {
+  const type = process.argv[2];
+  const argv = process.argv.slice(3);
+  const { proxyOptions } = getConfig(argv);
 
-  }, 1000000000);
-} catch(e) {
-  require('fs').writeFileSync('./test.txt', e.stack);
-  console.log(e.stack);
+  daemon(type, proxyOptions, FORK_FILE_PATH[type]);
 }

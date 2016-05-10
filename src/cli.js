@@ -7,10 +7,13 @@ import { version } from '../package.json';
 import fileConfig from '../config.json';
 import * as ssLocal from './ssLocal';
 import * as ssServer from './ssServer';
+import { getPid, writePidFile, deletePidFile } from './pid';
 
 const PROXY_ARGUMENT_PAIR = {
   s: 'serverAddr',
   p: 'serverPort',
+  l: 'localAddr',
+  b: 'localPort',
   k: 'password',
   m: 'method',
   t: 'timeout',
@@ -29,10 +32,24 @@ const SPAWN_OPTIONS = {
 };
 
 const DAEMON_COMMAND = {
-  start: 0,
-  stop: 1,
-  restart: 2,
+  start: 'start',
+  stop: 'stop',
+  restart: 'restart',
 };
+
+const log = console.log; // eslint-disable-line
+
+function getDaemonType(isServer) {
+  return isServer ? 'server' : 'local';
+}
+
+function isRunning(pid) {
+  try {
+    return process.kill(pid, 0);
+  } catch (e) {
+    return e.code === 'EPERM';
+  }
+}
 
 function getArgvOptions(argv) {
   const generalOptions = {};
@@ -94,7 +111,7 @@ export function getConfig(argv) {
 }
 
 function logHelp(invalidOption) {
-  console.log(// eslint-disable-line
+  log(
 `
 ${(invalidOption ? `${invalidOption}\n` : null)}shadowsock-js ${version}
 You can supply configurations via either config file or command line arguments.
@@ -102,40 +119,88 @@ You can supply configurations via either config file or command line arguments.
 Proxy options:
   -s SERVER_ADDR         server address, default: 127.0.0.1
   -p SERVER_PORT         server port, default: 8083
+  -l LOCAL_ADDR          local binding address, default: 127.0.0.1
+  -b LOCAL_PORT          local port, default: 1080
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
   -t TIMEOUT             timeout in seconds, default: 600
-
+  --level LOG_LEVEL      log level, default: warn
 General options:
   -h, --help             show this help message and exit
   -d start/stop/restart  daemon mode
+  -v, --verbose
 `
   );
 }
 
-function runDaemon(isServer) {
+function startDaemon(isServer) {
   // TODO: `node` or with path?
-  const child = spawn('node', [path.join(__dirname, 'daemon'), isServer ? 'server' : 'local']
+  const child = spawn('node', [path.join(__dirname, 'daemon'), getDaemonType(isServer)]
     .concat(process.argv.slice(2)), SPAWN_OPTIONS);
 
   child.disconnect();
   // do not wait for child
   child.unref();
+
+  writePidFile(getDaemonType(isServer), child.pid);
+  log('start');
+
+  return child;
 }
 
-function runSingle(isServer) {
+function stopDaemon(isServer, pid) {
+  if (pid) {
+    process.kill(pid, 'SIGHUP');
+    deletePidFile(getDaemonType(isServer));
+    log('stop');
+  } else {
+    log('already stopped');
+  }
+}
 
+function runDaemon(isServer, cmd) {
+  let pid = getPid(getDaemonType(isServer));
+  const running = isRunning(pid);
+
+  if (pid && !running) {
+    log('previous daemon unexpectedly exited');
+    deletePidFile(getDaemonType(isServer));
+    pid = null;
+  }
+
+  switch (cmd) {
+    case DAEMON_COMMAND.start:
+      if (pid) {
+        log('already started');
+      } else {
+        startDaemon(isServer);
+      }
+      return;
+    case DAEMON_COMMAND.stop:
+      stopDaemon(isServer, pid);
+      return;
+    case DAEMON_COMMAND.restart:
+      stopDaemon(isServer, pid);
+      startDaemon(isServer);
+      return;
+    default:
+      return;
+  }
+}
+
+function runSingle(isServer, proxyOptions) {
+  return isServer ? ssServer.startServer(proxyOptions) : ssLocal.startServer(proxyOptions);
 }
 
 export default function client(isServer) {
   const argv = process.argv.slice(2);
-  const { generalOptions, invalidOption } = getConfig(argv);
+  const { generalOptions, proxyOptions, invalidOption } = getConfig(argv);
 
   if (generalOptions.help || invalidOption) {
     logHelp(invalidOption);
   } else if (generalOptions.daemon) {
-    runDaemon();
+    runDaemon(isServer, generalOptions.daemon);
   } else {
-    runSingle();
+    runSingle(isServer, proxyOptions);
   }
 }
