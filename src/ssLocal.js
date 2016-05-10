@@ -36,7 +36,7 @@ function handleRequest(
   connection, data,
   { serverAddr, serverPort, password, method, localAddr, localPort,
     localAddrIPv6 },
-  dstInfo, onConnect, onError, isClientConnected
+  dstInfo, onConnect, onDestroy, isClientConnected
 ) {
   const cmd = data[1];
   const clientOptions = {
@@ -107,6 +107,8 @@ function handleRequest(
       tmp = createDecipher(password, method, remoteData);
       if (!tmp) {
         logger.warn(`${NAME} ssLocal get invalid msg`);
+        onDestroy();
+        return;
       }
       decipher = tmp.decipher;
       decipheredData = tmp.data;
@@ -134,6 +136,8 @@ function handleRequest(
   clientToRemote.on('error', e => {
     logger.warn('ssLocal error happened in clientToRemote when'
       + ` connecting to ${getDstStr(dstInfo)}: ${e.message}`);
+
+    onDestroy();
   });
 
   clientToRemote.on('close', e => {
@@ -165,6 +169,7 @@ function handleConnection(config, connection) {
   let dstInfo;
   let remoteConnected = false;
   let clientConnected = true;
+  let timer = null;
 
   connection.on('data', data => {
     switch (stage) {
@@ -202,7 +207,7 @@ function handleConnection(config, connection) {
             remoteConnected = true;
           },
           () => {
-            // get invalid msg
+            // get invalid msg or err happened
             if (remoteConnected) {
               remoteConnected = false;
               clientToRemote.destroy();
@@ -255,7 +260,12 @@ function handleConnection(config, connection) {
   });
 
   connection.on('close', e => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+
     clientConnected = false;
+
     if (remoteConnected) {
       if (e) {
         clientToRemote.destroy();
@@ -269,7 +279,7 @@ function handleConnection(config, connection) {
     logger.warn(`${NAME} error happened in client connection: ${e.message}`);
   });
 
-  setTimeout(() => {
+  timer = setTimeout(() => {
     logger.warn(`${NAME} connection timeout.`);
     if (clientConnected) {
       connection.destroy();

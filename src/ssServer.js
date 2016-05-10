@@ -9,7 +9,7 @@ const NAME = 'ssServer';
 
 function createClientToDst(
   connection, data,
-  password, method, onConnect, isLocalConnected
+  password, method, onConnect, onDestroy, isLocalConnected
 ) {
   const dstInfo = getDstInfo(data, true);
 
@@ -66,6 +66,7 @@ function createClientToDst(
 
   clientToDst.on('error', e => {
     logger.warn(`ssServer error happened when write to DST: ${e.stack}`);
+    onDestroy();
   });
 
   clientToDst.on('close', e => {
@@ -91,6 +92,7 @@ function handleConnection(config, connection) {
   let data;
   let localConnected = true;
   let dstConnected = false;
+  let timer = null;
 
   connection.on('data', chunck => {
     try {
@@ -119,6 +121,17 @@ function handleConnection(config, connection) {
           () => {
             dstConnected = true;
             connection.resume();
+          },
+          () => {
+            if (dstConnected) {
+              dstConnected = false;
+              clientToDst.destroy();
+            }
+
+            if (localConnected) {
+              localConnected = false;
+              connection.destroy();
+            }
           },
           () => localConnected
         );
@@ -164,6 +177,10 @@ function handleConnection(config, connection) {
   });
 
   connection.on('close', e => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+
     localConnected = false;
 
     if (dstConnected) {
@@ -175,7 +192,7 @@ function handleConnection(config, connection) {
     }
   });
 
-  setTimeout(() => {
+  timer = setTimeout(() => {
     logger.warn(`${NAME} connection timeout.`);
 
     if (localConnected) {

@@ -8,7 +8,7 @@
     "sslocal": "./bin/sslocal"
   },
   "scripts": {
-    "build": "babel src --out-dir lib",
+    "build": "babel src --out-dir lib && eslint src",
     "watch": "babel src --watch --out-dir lib",
     "test": "mocha",
     "lint": "eslint src",
