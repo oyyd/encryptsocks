@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-var path = require('path');
-var fs = require('fs');
-var daemon = require('../lib/daemon');
+var cli = require('../lib/cli').default;
+var isServer = false;
 
-daemon(path.join(__dirname, '../lib/startLocal'));
+cli(isServer);

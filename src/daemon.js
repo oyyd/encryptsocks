@@ -1,6 +1,6 @@
 import { fork } from 'child_process';
 import logger from './logger';
-import { getConfig, logHelp } from './cli';
+import { getConfig } from './cli';
 
 const NAME = 'daemon';
 const MAX_RESTART_TIME = 5;
@@ -31,15 +31,35 @@ function forkProcess(config, filePath, _restartTime) {
 }
 
 export default function daemon(filePath) {
-  const { generalOptions, proxyOptions } = getConfig();
+  const { proxyOptions } = getConfig();
 
-  console.log(generalOptions, proxyOptions);
-
-  if (generalOptions.help) {
-    logHelp();
-  } else {
-    forkProcess(proxyOptions, filePath);
-  }
+  forkProcess(proxyOptions, filePath);
 }
 
-module.exports = daemon;
+console.log('yes');
+
+try {
+  if (module === require.main) {
+    const type = process.argv[2];
+    const argv = process.argv.slice(3);
+    const { proxyOptions } = getConfig(argv);
+
+    console.log('yes');
+
+    process.on('message', msg => {
+      console.log(`daemon get msg: ${msg}`);
+      require('fs').writeFileSync('./test.txt', msg);
+    });
+
+    setTimeout(() => {
+
+    }, 1000000000);
+  }
+
+  setTimeout(() => {
+
+  }, 1000000000);
+} catch(e) {
+  require('fs').writeFileSync('./test.txt', e.stack);
+  console.log(e.stack);
+}

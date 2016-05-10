@@ -1,7 +1,12 @@
+import path from 'path';
 import minimist from 'minimist';
+import { spawn } from 'child_process';
+
 import DEFAULT_CONFIG from './defaultConfig';
 import { version } from '../package.json';
 import fileConfig from '../config.json';
+import * as ssLocal from './ssLocal';
+import * as ssServer from './ssServer';
 
 const PROXY_ARGUMENT_PAIR = {
   s: 'serverAddr',
@@ -15,13 +20,24 @@ const PROXY_ARGUMENT_PAIR = {
 const GENERAL_ARGUMENT_PAIR = {
   h: 'help',
   help: 'help',
+  d: 'daemon',
 };
 
-function getArgvOptions() {
+const SPAWN_OPTIONS = {
+  detached: true,
+  stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+};
+
+const DAEMON_COMMAND = {
+  start: 0,
+  stop: 1,
+  restart: 2,
+};
+
+function getArgvOptions(argv) {
   const generalOptions = {};
   const proxyOptions = {};
-  const configPair = minimist(process.argv.slice(2));
-
+  const configPair = minimist(argv);
   const optionsType = [{
     options: proxyOptions,
     keys: Object.keys(PROXY_ARGUMENT_PAIR),
@@ -32,35 +48,55 @@ function getArgvOptions() {
     values: GENERAL_ARGUMENT_PAIR,
   }];
 
+  let invalidOption = null;
+
   Object.keys(configPair).forEach(key => {
+    if (key === '_') {
+      return;
+    }
+
+    let hit = false;
+
     optionsType.forEach(optType => {
       const i = optType.keys.indexOf(key);
 
       if (~i) {
         optType.options[optType.values[optType.keys[i]]] = configPair[key]; // eslint-disable-line
+        hit = true;
       }
     });
+
+    if (!hit) {
+      invalidOption = key;
+    }
   });
 
+  if (invalidOption) {
+    invalidOption = (invalidOption.length === 1) ? `-${invalidOption}` : `--${invalidOption}`;
+  } else if (generalOptions.daemon
+    && !!!~Object.keys(DAEMON_COMMAND).indexOf(generalOptions.daemon)) {
+    invalidOption = `invalid daemon command: ${generalOptions.daemon}`;
+  }
+
   return {
-    generalOptions, proxyOptions,
+    generalOptions, proxyOptions, invalidOption,
   };
 }
 
-export function getConfig() {
-  const { generalOptions, proxyOptions } = getArgvOptions();
+export function getConfig(argv) {
+  const { generalOptions, proxyOptions, invalidOption } = getArgvOptions(argv);
   const res = {
-    generalOptions,
+    generalOptions, invalidOption,
     proxyOptions: Object.assign({}, DEFAULT_CONFIG, fileConfig, proxyOptions),
   };
 
   return res;
 }
 
-export function logHelp() {
+function logHelp(invalidOption) {
   console.log(// eslint-disable-line
 `
-shadowsock-js ${version}
+${(invalidOption ? `${invalidOption}\n` : null)}shadowsock-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:
@@ -72,6 +108,34 @@ Proxy options:
 
 General options:
   -h, --help             show this help message and exit
+  -d start/stop/restart  daemon mode
 `
   );
+}
+
+function runDaemon(isServer) {
+  // TODO: `node` or with path?
+  const child = spawn('node', [path.join(__dirname, 'daemon'), isServer ? 'server' : 'local']
+    .concat(process.argv.slice(2)), SPAWN_OPTIONS);
+
+  child.disconnect();
+  // do not wait for child
+  child.unref();
+}
+
+function runSingle(isServer) {
+
+}
+
+export default function client(isServer) {
+  const argv = process.argv.slice(2);
+  const { generalOptions, invalidOption } = getConfig(argv);
+
+  if (generalOptions.help || invalidOption) {
+    logHelp(invalidOption);
+  } else if (generalOptions.daemon) {
+    runDaemon();
+  } else {
+    runSingle();
+  }
 }
