@@ -4,7 +4,7 @@ const DEFAULT_CONFIG = {
   localAddr: '127.0.0.1',
   localPort: 1080,
   password: 'YOUR_PASSWORD_HERE',
-  timeout: 600,
+  timeout: 60,
   method: 'aes-128-cfb',
 
   level: 'warn',

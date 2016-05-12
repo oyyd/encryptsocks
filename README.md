@@ -1,21 +1,25 @@
 # shadowsocks-js (WIP)
 
-Yet another implementation of [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs).
-
-## Features
+Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs).
 
 ## Requirement
 
 Shadowsocks-js has been tested in osx and ubuntu 14 but it's also expected to work in
 windows.
 
-## Install
+## Installation
 
 ```
 $ npm i -g shadowsocks-js
 ```
 
 ## CLI
+
+Use `localssjs` (local ssjs) to start clients to communicate with applications.
+
+Use `serverssjs` (server ssjs) to start remote server.
+
+Use `localssjs -h` or `serverssjs -h` to show cli options:
 
 ```
 Proxy options:
@@ -26,7 +30,7 @@ Proxy options:
   -b LOCAL_PORT          local port, default: 1080
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
-  -t TIMEOUT             timeout in seconds, default: 600
+  -t TIMEOUT             timeout in seconds, default: 60
   --level LOG_LEVEL      log level, default: warn,
                          example: --level verbose
 
@@ -35,12 +39,24 @@ General options:
   -d start/stop/restart  daemon mode
 ```
 
-```
-$ sslocal
-```
+### Examples
+
+Start clients that bind at `1088`:
 
 ```
-$ ssserver
+$ localssjs -b 1088
+```
+
+Start daemon:
+
+```
+$ localssjs -d start -b 1088
+```
+
+Log verbosely:
+
+```
+$ ssserver -d start --level verbose
 ```
 
 ## Options
@@ -60,6 +76,15 @@ $ ssserver
   "serverAddrIPv6": "::1"
 }
 ```
+
+Specify your config file with `-c` flag:
+
+```
+$ serverssjs -c config.json
+```
+
+You can change default config in `config.json` file of your global shadowsocks-js
+package.
 
 ## Encryption methods
 
@@ -85,6 +110,11 @@ $ npm test
 ```
 
 ## About the support to UDP relay
+
+I intend to implement UDP relay and I have implement it in shadowsocks-js
+but I can't find an effective way to test this in real world networking.
+Please create issues to help us if you know any applications that support
+UDP-socks well.
 
 ## License
 

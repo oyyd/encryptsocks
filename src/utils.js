@@ -1,4 +1,13 @@
 import ip from 'ip';
+import { accessSync, mkdirSync } from 'fs';
+
+export function mkdirIfNotExistSync(path) {
+  try {
+    accessSync(path);
+  } catch (e) {
+    mkdirSync(path);
+  }
+}
 
 export function sendDgram(socket, data, ...args) {
   socket.send(data, 0, data.length, ...args);

@@ -4,7 +4,6 @@ import { getDstInfo, writeOrPause, getDstStr } from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
-// import { filter } from './filter';
 
 const NAME = 'ssLocal';
 
@@ -26,7 +25,6 @@ function handleMethod(connection, data) {
   }
 
   buf.writeUInt16BE(0x0500);
-  logger.debug(`1. TRY TO WRITE: ${buf}`);
   connection.write(buf);
 
   return 1;
@@ -76,7 +74,6 @@ function handleRequest(
     tmp.writeUInt16BE(localPort);
     repBuf = Buffer.concat([repBuf, ip.toBuffer(isUDP4 ? localAddr : localAddrIPv6), tmp]);
 
-    logger.debug(`Response to udp association: ${repBuf.toString('hex')}`);
     connection.write(repBuf);
 
     return {
@@ -106,7 +103,7 @@ function handleRequest(
     if (!decipher) {
       tmp = createDecipher(password, method, remoteData);
       if (!tmp) {
-        logger.warn(`${NAME} ssLocal get invalid msg`);
+        logger.warn(`${NAME} get invalid msg`);
         onDestroy();
         return;
       }
@@ -115,8 +112,6 @@ function handleRequest(
     } else {
       decipheredData = decipher.update(remoteData);
     }
-
-    logger.debug(`${NAME} received data from remote: ${decipheredData.toString('hex')}`);
 
     if (isClientConnected()) {
       writeOrPause(clientToRemote, connection, decipheredData);
@@ -149,7 +144,6 @@ function handleRequest(
   });
 
   // write
-  logger.debug(`2. TRY TO WRITE: ${repBuf.toString('hex')}`);
   connection.write(repBuf);
 
   writeOrPause(connection, clientToRemote, cipheredData);
@@ -174,9 +168,6 @@ function handleConnection(config, connection) {
   connection.on('data', data => {
     switch (stage) {
       case 0:
-        logger.debug(`ssLocal at stage ${stage} received `
-          + `data from client: ${data.toString('hex')}`);
-
         stage = handleMethod(connection, data);
 
         break;
@@ -188,17 +179,6 @@ function handleConnection(config, connection) {
           connection.destroy();
           return;
         }
-
-        // if (!filter(dstInfo)) {
-        //   // TODO: clean everything
-        //   connection.end();
-        //   connection.destroy();
-        //   stage = -1;
-        //   return;
-        // }
-
-        logger.debug(`ssLocal at stage ${stage} received data `
-          + `from client: ${data.toString('hex')}`);
 
         tmp = handleRequest(
           connection, data, config, dstInfo,
@@ -235,8 +215,6 @@ function handleConnection(config, connection) {
         break;
       case 2:
         tmp = cipher.update(data);
-        logger.debug(`ssLocal at stage ${stage} received data `
-          + `from client and write to remote: ${tmp.toString('hex')}`);
 
         writeOrPause(connection, clientToRemote, tmp);
 
@@ -260,6 +238,8 @@ function handleConnection(config, connection) {
   });
 
   connection.on('close', e => {
+    // logger.error('close', getDstStr(dstInfo));
+
     if (timer) {
       clearTimeout(timer);
     }
@@ -280,7 +260,7 @@ function handleConnection(config, connection) {
   });
 
   timer = setTimeout(() => {
-    logger.warn(`${NAME} connection timeout.`);
+    logger.warn(`${NAME} connection timeout.`, getDstStr(dstInfo));
     if (clientConnected) {
       connection.destroy();
     }

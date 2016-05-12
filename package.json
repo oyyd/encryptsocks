@@ -1,11 +1,11 @@
 {
   "name": "shadowsocks-js",
   "version": "1.0.0",
-  "description": "Yet another shadowsocks implementation in node.",
+  "description": "Yet another shadowsocks implementation for nodejs.",
   "main": "./lib/index.js",
   "bin": {
-    "ssserver": "./bin/ssserver",
-    "sslocal": "./bin/sslocal"
+    "serverssjs": "./bin/serverssjs",
+    "localssjs": "./bin/localssjs"
   },
   "scripts": {
     "build": "babel src --out-dir lib && eslint src",

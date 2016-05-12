@@ -1,5 +1,6 @@
-import { unlinkSync, mkdirSync, writeFileSync, accessSync, readFileSync } from 'fs';
+import { unlinkSync, writeFileSync, accessSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { mkdirIfNotExistSync } from './utils';
 
 const TMP_PATH = join(__dirname, '../tmp');
 
@@ -14,18 +15,10 @@ function getFileName(type) {
   }
 }
 
-function checkDir() {
-  try {
-    accessSync(TMP_PATH);
-  } catch (e) {
-    mkdirSync(TMP_PATH);
-  }
-}
-
 export function getPid(type) {
   const fileName = getFileName(type);
 
-  checkDir();
+  mkdirIfNotExistSync(TMP_PATH);
 
   try {
     accessSync(fileName);
@@ -37,13 +30,13 @@ export function getPid(type) {
 }
 
 export function writePidFile(type, pid) {
-  checkDir();
+  mkdirIfNotExistSync(TMP_PATH);
 
   writeFileSync(getFileName(type), pid);
 }
 
 export function deletePidFile(type) {
-  checkDir();
+  mkdirIfNotExistSync(TMP_PATH);
 
   unlinkSync(getFileName(type));
 }

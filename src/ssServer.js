@@ -37,8 +37,6 @@ function createClientToDst(
   const clientToDst = connect(clientOptions, onConnect);
 
   clientToDst.on('data', clientData => {
-    logger.debug(`server received data from DST:${clientData.toString('ascii')}`);
-
     if (!cipher) {
       tmp = createCipher(password, method, clientData);
       cipher = tmp.cipher;
@@ -65,7 +63,7 @@ function createClientToDst(
   });
 
   clientToDst.on('error', e => {
-    logger.warn(`ssServer error happened when write to DST: ${e.stack}`);
+    logger.warn(`ssServer error happened when write to DST: ${e.message}`);
     onDestroy();
   });
 
@@ -110,8 +108,6 @@ function handleConnection(config, connection) {
 
     switch (stage) {
       case 0:
-        logger.debug(`server at stage ${stage} received data: ${data.toString('hex')}`);
-
         // TODO: should pause? or preserve data?
         connection.pause();
 
@@ -150,10 +146,7 @@ function handleConnection(config, connection) {
         stage = 1;
         break;
       case 1:
-        logger.debug(`server at stage ${stage} received data: ${data.toString('ascii')}`);
-
         writeOrPause(connection, clientToDst, data);
-
         break;
       default:
         return;
@@ -173,7 +166,7 @@ function handleConnection(config, connection) {
   });
 
   connection.on('error', e => {
-    logger.error(`ssServer error happened in the connection with ssLocal : ${e.message}`);
+    logger.warn(`ssServer error happened in the connection with ssLocal : ${e.message}`);
   });
 
   connection.on('close', e => {
@@ -193,7 +186,7 @@ function handleConnection(config, connection) {
   });
 
   timer = setTimeout(() => {
-    logger.warn(`${NAME} connection timeout.`);
+    logger.warn(`${NAME} connection timeout.`, localConnected, dstConnected);
 
     if (localConnected) {
       connection.destroy();
