@@ -142,7 +142,7 @@ Proxy options:
   -b LOCAL_PORT          local port, default: 1080
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
-  -t TIMEOUT             timeout in seconds, default: 60
+  -t TIMEOUT             timeout in seconds, default: 600
   --level LOG_LEVEL      log level, default: warn
                          example: --level verbose
 General options:

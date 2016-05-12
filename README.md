@@ -30,7 +30,7 @@ Proxy options:
   -b LOCAL_PORT          local port, default: 1080
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
-  -t TIMEOUT             timeout in seconds, default: 60
+  -t TIMEOUT             timeout in seconds, default: 600
   --level LOG_LEVEL      log level, default: warn,
                          example: --level verbose
 
@@ -68,7 +68,7 @@ $ ssserver -d start --level verbose
   "localAddr": "127.0.0.1",
   "localPort": 1080,
   "password": "YOUR_PASSWORD_HERE",
-  "timeout": 60,
+  "timeout": 600,
   "method": "aes-128-cfb",
 
   "level": "warn",
