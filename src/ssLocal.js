@@ -238,8 +238,6 @@ function handleConnection(config, connection) {
   });
 
   connection.on('close', e => {
-    // logger.error('close', getDstStr(dstInfo));
-
     if (timer) {
       clearTimeout(timer);
     }

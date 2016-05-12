@@ -1,6 +1,6 @@
 {
   "name": "shadowsocks-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Yet another shadowsocks implementation for nodejs.",
   "main": "./lib/index.js",
   "bin": {
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "ip": "^1.1.3",
+    "lru-cache": "^4.0.1",
     "minimist": "^1.2.0",
     "winston": "^2.2.0"
   }
