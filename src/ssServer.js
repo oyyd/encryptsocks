@@ -186,8 +186,6 @@ function handleConnection(config, connection) {
   });
 
   timer = setTimeout(() => {
-    logger.warn(`${NAME} connection timeout.`, localConnected, dstConnected);
-
     if (localConnected) {
       connection.destroy();
     }

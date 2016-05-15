@@ -1,4 +1,4 @@
-# shadowsocks-js (WIP)
+# shadowsocks-js
 
 Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs).
 
@@ -107,6 +107,12 @@ package.
 
 ```
 $ npm test
+```
+
+## Contribute
+
+```
+$ npm run watch
 ```
 
 ## About the support to UDP relay
