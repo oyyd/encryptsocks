@@ -2,6 +2,11 @@
   "name": "shadowsocks-js",
   "version": "1.0.1",
   "description": "Yet another shadowsocks implementation for nodejs.",
+  "keywords": [
+    "shadowsocks",
+    "SOCKS5",
+    "GFW"
+  ],
   "main": "./lib/index.js",
   "bin": {
     "serverssjs": "./bin/serverssjs",

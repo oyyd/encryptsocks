@@ -56,7 +56,7 @@ $ localssjs -d start -b 1088
 Log verbosely:
 
 ```
-$ ssserver -d start --level verbose
+$ serverssjs -d start --level verbose
 ```
 
 ## Options
