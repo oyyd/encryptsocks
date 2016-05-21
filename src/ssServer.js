@@ -53,7 +53,7 @@ function createClientToDst(
   });
 
   clientToDst.on('drain', () => {
-    connection.resumse();
+    connection.resume();
   });
 
   clientToDst.on('end', () => {
