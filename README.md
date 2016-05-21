@@ -1,6 +1,6 @@
 # shadowsocks-js
 
-Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs).
+Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
 
 ## Requirement
 
@@ -17,7 +17,10 @@ $ npm i -g shadowsocks-js
 
 Use `localssjs` (local ssjs) to start clients to communicate with applications.
 
-Use `serverssjs` (server ssjs) to start remote server.
+You may prefer to navigate [clients page](https://shadowsocks.org/en/download/clients.html) and choose
+clients for your devices instead of using `localssjs`.
+
+Use `serverssjs` (server ssjs) to start your remote server.
 
 Use `localssjs -h` or `serverssjs -h` to show cli options:
 
@@ -50,7 +53,7 @@ $ localssjs -b 1088
 Start daemon:
 
 ```
-$ localssjs -d start -b 1088
+$ localssjs -d start -b 1080
 ```
 
 Log verbosely:

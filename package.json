@@ -1,13 +1,13 @@
 {
   "name": "shadowsocks-js",
-  "version": "1.0.1",
-  "description": "Yet another shadowsocks implementation for nodejs.",
+  "version": "1.0.2",
+  "description": "Yet another shadowsocks implementation for nodejs to help you bypass firewalls.",
   "keywords": [
     "shadowsocks",
+    "ss",
     "SOCKS5",
-    "GFW"
+    "firewall"
   ],
-  "main": "./lib/index.js",
   "bin": {
     "serverssjs": "./bin/serverssjs",
     "localssjs": "./bin/localssjs"
@@ -16,9 +16,7 @@
     "build": "babel src --out-dir lib && eslint src",
     "watch": "babel src --watch --out-dir lib",
     "test": "mocha",
-    "lint": "eslint src",
-    "clean-log": "rm *.log",
-    "test-server": "node test/testServer"
+    "lint": "eslint src"
   },
   "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",
