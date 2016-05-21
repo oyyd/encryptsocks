@@ -15,11 +15,7 @@ $ npm i -g shadowsocks-js
 
 ## CLI
 
-Use `localssjs` (local ssjs) to start clients to communicate with applications.
-
-You may prefer to navigate [clients page](https://shadowsocks.org/en/download/clients.html) and choose a desktop client.
-
-clients for your devices instead of using `localssjs`.
+Use `localssjs` (local ssjs) to start clients to communicate with applications. You may prefer to navigate [clients page](https://shadowsocks.org/en/download/clients.html) and choose clients for your devices instead of using `localssjs`.
 
 Use `serverssjs` (server ssjs) to start your remote server.
 
