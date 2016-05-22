@@ -7,6 +7,7 @@ const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const _config = require('../config.json');
+const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
 
 const config = Object.assign({}, _config, {
   'level': 'error',
@@ -88,7 +89,7 @@ describe('UDP Relay', () => {
   });
 });
 
-describe('[local only] UDP6 Relay', () => {
+describe(LOCAL_ONLY + ' UDP6 Relay', () => {
   let ssLocalServer;
   let ssServerServer;
   let dstServerUDP6;

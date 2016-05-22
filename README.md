@@ -6,6 +6,9 @@ Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](
 
 ## Requirement
 
+* Node 4, 5 (babel transform)
+* Node 6 (almost native es6)
+
 Shadowsocks-js has been tested in osx and ubuntu 14 but it's also expected to work in
 windows.
 

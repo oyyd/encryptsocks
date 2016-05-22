@@ -5,6 +5,7 @@ const shttps = require('socks5-https-client');
 const http = require('http');
 const assert = require('assert');
 const ip = require('ip');
+const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
 
 const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
@@ -47,18 +48,6 @@ describe('getDstInfo', () => {
     strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
   });
 
-  it('should return correct DST info when parsing ipv6', () => {
-    const buffer = new Buffer(22);
-    buffer.write('0501000400000000000000000000000000000001a496', 'hex');
-
-    const dstInfo = getDstInfo(buffer);
-
-    strictEqual(dstInfo.atyp, 0x04);
-    strictEqual(dstInfo.dstAddrLength, 16);
-    strictEqual(ip.toString(dstInfo.dstAddr), '::1');
-    strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
-  });
-
   it('should return correct DST info when parsing domain', () => {
     const buffer = new Buffer(18);
     buffer.write('050100030b', 0, 'hex');
@@ -76,6 +65,21 @@ describe('getDstInfo', () => {
   // TODO: ipv6
 });
 
+describe(LOCAL_ONLY + ' getDstInfo ipv6', () => {
+
+  it('should return correct DST info when parsing ipv6', () => {
+    const buffer = new Buffer(22);
+    buffer.write('0501000400000000000000000000000000000001a496', 'hex');
+
+    const dstInfo = getDstInfo(buffer);
+
+    strictEqual(dstInfo.atyp, 0x04);
+    strictEqual(dstInfo.dstAddrLength, 16);
+    strictEqual(ip.toString(dstInfo.dstAddr), '::1');
+    strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
+  });
+});
+
 describe('http proxy', () => {
   let dstServer;
   let ssLocalServer;
@@ -87,79 +91,83 @@ describe('http proxy', () => {
     dstServer = createHTTPServer(cb);
   });
 
-  it('should get correct response through ipv4', function(cb) {
-    this.timeout(TIMEOUT);
+  describe('ipv4', () => {
+    it('should get correct response through ipv4', function(cb) {
+      this.timeout(TIMEOUT);
 
-    const options = {
-      port: DST_PORT,
-      host: DST_ADDR,
-      socksHost: config.localHost,
-      socksPort: config.localPort,
-    };
+      const options = {
+        port: DST_PORT,
+        host: DST_ADDR,
+        socksHost: config.localHost,
+        socksPort: config.localPort,
+      };
 
-    shttp.get(options, res => {
-      res.on('readable', () => {
-        strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
-          'Responsed text is not same');
-        cb();
+      shttp.get(options, res => {
+        res.on('readable', () => {
+          strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
+            'Responsed text is not same');
+          cb();
+        });
       });
     });
-  });
 
-  it('should get correct response through ipv6', function(cb) {
-    this.timeout(TIMEOUT);
+    it('should get correct response when the `atyp` is `domain`', function(cb) {
+      this.timeout(TIMEOUT);
 
-    const options = {
-      port: DST_PORT,
-      host: '::1',
-      socksHost: config.localHost,
-      socksPort: config.localPort,
-    };
+      let success = false;
 
-    shttp.get(options, res => {
-      res.on('readable', () => {
-        strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
-          'Responsed text is not same');
-        cb()
-      });
-    });
-  });
+      shttp.get('http://example.com', res => {
+        res.on('readable', () => {
+          let text = res.read();
 
-  it('should get correct response when the `atyp` is `domain`', function(cb) {
-    this.timeout(TIMEOUT);
-
-    let success = false;
-
-    shttp.get('http://example.com', res => {
-      res.on('readable', () => {
-        let text = res.read();
-
-        if (text) {
-          text = text.toString('utf8');
-          if (~text.indexOf('Example Domain')) {
-            success = true;
-            cb();
+          if (text) {
+            text = text.toString('utf8');
+            if (~text.indexOf('Example Domain')) {
+              success = true;
+              cb();
+            }
           }
-        }
-      });
+        });
 
-      res.on('close', () => {
-        if (!success) {
-          cb(new Error('failed'));
-        }
+        res.on('close', () => {
+          if (!success) {
+            cb(new Error('failed'));
+          }
+        });
+      });
+    });
+
+    // TODO: this test seems to be invalid
+    it('should get correct response when the requesting by ssl', function(cb) {
+      this.timeout(TIMEOUT);
+
+      shttps.get('https://example.com', res => {
+        res.on('readable', () => {
+          let text = res.read().toString('utf8');
+          assert(!!~text.indexOf('Example Domain'));
+          cb();
+        });
       });
     });
   });
 
-  // TODO: this test seems to be invalid
-  it('should get correct response when the requesting by ssl', function(cb) {
-    this.timeout(TIMEOUT);
+  describe('ipv6', () => {
+    it('should get correct response through ipv6', function(cb) {
+      this.timeout(TIMEOUT);
 
-    shttps.get('https://example.com', res => {
-      res.on('readable', () => {
-        let text = res.read().toString('utf8');
-        assert(!!~text.indexOf('Example Domain'));
-        cb();
+      const options = {
+        port: DST_PORT,
+        host: '::1',
+        socksHost: config.localHost,
+        socksPort: config.localPort,
+      };
+
+      shttp.get(options, res => {
+        res.on('readable', () => {
+          strictEqual(res.read().toString('utf8'), DST_RES_TEXT,
+            'Responsed text is not same');
+          cb()
+        });
       });
     });
   });

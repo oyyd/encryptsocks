@@ -133,7 +133,7 @@ function _createUDPRelay(udpType, config, isServer) {
   });
 
   socket.on('error', (err) => {
-    logger.debug(`${NAME} socket err: ${err.message}`);
+    logger.error(`${NAME} socket err: ${err.message}`);
     socket.close();
   });
 
@@ -151,7 +151,11 @@ function _createUDPRelay(udpType, config, isServer) {
 function close(sockets) {
   sockets.forEach(socket => {
     if (socket) {
-      socket.close();
+      try {
+        socket.close();
+      } catch (e) {
+        // if the socket has been closed
+      }
     }
   });
 }
