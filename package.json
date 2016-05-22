@@ -1,6 +1,6 @@
 {
   "name": "shadowsocks-js",
-  "version": "1.1.0",
+  "version": "1.0.4",
   "description": "Yet another shadowsocks implementation for nodejs to help you bypass firewalls.",
   "keywords": [
     "shadowsocks",
