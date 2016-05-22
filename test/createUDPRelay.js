@@ -28,13 +28,11 @@ describe('UDP Relay', () => {
   let dstServer;
   let ssLocalServer;
   let ssServerServer;
-  let dstServerUDP6;
 
   before(() => {
     ssLocalServer = ssLocal.startServer(config);
     ssServerServer = ssServer.startServer(config);
     dstServer = createUDPServer();
-    dstServerUDP6 = createUDPServer('udp6');
   });
 
   it('should work for UDP association and receive message repeately', function(cb) {
@@ -81,6 +79,26 @@ describe('UDP Relay', () => {
     });
   });
 
+  after(() => {
+    dstServer.close();
+    ssLocalServer.server.close();
+    ssLocalServer.udpRelay.close();
+    ssServerServer.server.close();
+    ssServerServer.udpRelay.close();
+  });
+});
+
+describe('[local only] UDP6 Relay', () => {
+  let ssLocalServer;
+  let ssServerServer;
+  let dstServerUDP6;
+
+  before(() => {
+    ssLocalServer = ssLocal.startServer(config);
+    ssServerServer = ssServer.startServer(config);
+    dstServerUDP6 = createUDPServer('udp6');
+  });
+
   it('should work for UDP association for UDP6', function(cb) {
     this.timeout(5000);
 
@@ -106,7 +124,6 @@ describe('UDP Relay', () => {
   });
 
   after(() => {
-    dstServer.close();
     dstServerUDP6.close();
     ssLocalServer.server.close();
     ssLocalServer.udpRelay.close();

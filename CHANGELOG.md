@@ -1,8 +1,10 @@
 # Changelog
 
+## 1.1.0(2016-05-22)
+
 ## 1.0.4(2016-05-21)
 
-* Bug fix: typo `clientToDst.resumse()` 
+* Bug fix: typo `clientToDst.resumse()`
 
 * Babel: Enable babel loose mode.
 

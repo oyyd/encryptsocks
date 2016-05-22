@@ -1,6 +1,6 @@
 {
   "name": "shadowsocks-js",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Yet another shadowsocks implementation for nodejs to help you bypass firewalls.",
   "keywords": [
     "shadowsocks",
@@ -16,7 +16,8 @@
     "build": "babel src --out-dir lib && eslint src",
     "watch": "babel src --watch --out-dir lib",
     "test": "mocha",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "travis-ci-test": "mocha --fgrep '[local only]' --invert"
   },
   "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",
