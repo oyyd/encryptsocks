@@ -1,6 +1,7 @@
 # shadowsocks-js
 
 [![npm-version](https://img.shields.io/npm/v/shadowsocks-js.svg?style=flat-square)](https://www.npmjs.com/package/shadowsocks-js)
+[![travis-ci build](https://travis-ci.org/oyyd/shadowsocks-js.svg)](https://travis-ci.org/oyyd/shadowsocks-js)
 
 Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
 

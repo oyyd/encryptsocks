@@ -7,4 +7,5 @@ script:
   - npm run travis-ci-test
 branches:
   only:
-    - 1.1.0
+    - master
+    - dev
