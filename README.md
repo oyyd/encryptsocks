@@ -1,5 +1,7 @@
 # shadowsocks-js
 
+[![npm-version](https://img.shields.io/npm/v/shadowsocks-js.svg?style=flat-square)](https://www.npmjs.com/package/shadowsocks-js)
+
 Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
 
 ## Requirement
@@ -59,7 +61,7 @@ Log verbosely:
 $ serverssjs -d start --level verbose
 ```
 
-## Options
+## Config
 
 ```json
 {
