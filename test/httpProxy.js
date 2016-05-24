@@ -62,11 +62,6 @@ describe('getDstInfo', () => {
     strictEqual(dstInfo.dstPort.readUInt16BE(), 80);
   });
 
-  // TODO: ipv6
-});
-
-describe(LOCAL_ONLY + ' getDstInfo ipv6', () => {
-
   it('should return correct DST info when parsing ipv6', () => {
     const buffer = new Buffer(22);
     buffer.write('0501000400000000000000000000000000000001a496', 'hex');
@@ -78,6 +73,7 @@ describe(LOCAL_ONLY + ' getDstInfo ipv6', () => {
     strictEqual(ip.toString(dstInfo.dstAddr), '::1');
     strictEqual(dstInfo.dstPort.readUInt16BE(), 42134);
   });
+  // TODO: ipv6
 });
 
 describe('http proxy', () => {
@@ -174,8 +170,7 @@ describe('http proxy', () => {
 
   after(() => {
     dstServer.close();
-    ssLocalServer.server.close();
-    ssLocalServer.udpRelay.close();
+    ssLocalServer.closeAll();
     ssServerServer.server.close();
     ssServerServer.udpRelay.close();
   });

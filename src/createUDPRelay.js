@@ -1,6 +1,6 @@
 import dgram from 'dgram';
 import logger from './logger';
-import { getDstInfoFromUDPMsg, sendDgram } from './utils';
+import { getDstInfoFromUDPMsg, sendDgram, closeSilently } from './utils';
 import LRU from 'lru-cache';
 import * as encryptor from './encryptor';
 import ip from 'ip';
@@ -150,13 +150,7 @@ function _createUDPRelay(udpType, config, isServer) {
 
 function close(sockets) {
   sockets.forEach(socket => {
-    if (socket) {
-      try {
-        socket.close();
-      } catch (e) {
-        // if the socket has been closed
-      }
-    }
+    closeSilently(socket);
   });
 }
 

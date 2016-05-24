@@ -5,3 +5,4 @@ research/**
 tmp
 logs
 TODO.md
+/coverage

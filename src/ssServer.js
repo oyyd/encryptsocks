@@ -216,14 +216,13 @@ function createServer(config) {
 }
 
 export function startServer(config) {
-  const server = createServer(config);
   const level = config.level;
 
   if (level) {
     changeLevel(logger, level);
   }
 
-  return server;
+  return createServer(config);
 }
 
 if (module === require.main) {

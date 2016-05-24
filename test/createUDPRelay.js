@@ -126,8 +126,7 @@ describe(LOCAL_ONLY + ' UDP6 Relay', () => {
 
   after(() => {
     dstServerUDP6.close();
-    ssLocalServer.server.close();
-    ssLocalServer.udpRelay.close();
+    ssLocalServer.closeAll();
     ssServerServer.server.close();
     ssServerServer.udpRelay.close();
   });

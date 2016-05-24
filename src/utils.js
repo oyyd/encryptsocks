@@ -1,6 +1,16 @@
 import ip from 'ip';
 import { accessSync, mkdirSync } from 'fs';
 
+export function closeSilently(server) {
+  if (server) {
+    try {
+      server.close();
+    } catch (e) {
+      // already closed
+    }
+  }
+}
+
 export function mkdirIfNotExistSync(path) {
   try {
     accessSync(path);

@@ -1,9 +1,10 @@
 import ip from 'ip';
 import { createServer as _createServer, connect } from 'net';
-import { getDstInfo, writeOrPause, getDstStr } from './utils';
+import { getDstInfo, writeOrPause, getDstStr, closeSilently } from './utils';
 import logger, { changeLevel } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
+import createHTTPProxy from './createHTTPProxy';
 
 const NAME = 'ssLocal';
 
@@ -268,9 +269,18 @@ function handleConnection(config, connection) {
   }, config.timeout * 1000);
 }
 
+function closeAll() {
+  closeSilently(this.server);
+  this.udpRelay.close();
+  if (this.httpProxyServer) {
+    this.httpProxyServer.close();
+  }
+}
+
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config));
   const udpRelay = createUDPRelay(config, false);
+  const httpProxyServer = config.enableHTTPProxy ? createHTTPProxy(config) : null;
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -281,22 +291,23 @@ function createServer(config) {
   });
 
   server.listen(config.localPort);
+
   logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
-    server, udpRelay,
+    server, udpRelay, httpProxyServer,
+    closeAll,
   };
 }
 
 export function startServer(config) {
-  const server = createServer(config);
   const level = config.level;
 
   if (level) {
     changeLevel(logger, level);
   }
 
-  return server;
+  return createServer(config);
 }
 
 if (module === require.main) {

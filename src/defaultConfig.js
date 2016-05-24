@@ -10,6 +10,9 @@ const DEFAULT_CONFIG = {
   level: 'warn',
   localAddrIPv6: '::1',
   serverAddrIPv6: '::1',
+
+  enableHTTPProxy: false,
+  HTTPProxyPort: 8183,
 };
 
 export default DEFAULT_CONFIG;
