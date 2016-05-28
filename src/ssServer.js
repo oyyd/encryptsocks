@@ -218,7 +218,7 @@ function createServer(config) {
 }
 
 export function startServer(config, willLogToConsole = false) {
-  logger = createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
+  logger = createLogger(config.level, LOG_NAMES.SERVER, willLogToConsole);
 
   return createServer(config);
 }
