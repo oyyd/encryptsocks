@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { fork } from 'child_process';
-import logger from './logger';
+import { createLogger, LOG_NAMES } from './logger';
 import { getConfig } from './cli';
 import { deletePidFile } from './pid';
 
@@ -8,6 +8,7 @@ const NAME = 'daemon';
 const MAX_RESTART_TIME = 5;
 
 let child = null;
+let logger;
 
 export const FORK_FILE_PATH = {
   local: join(__dirname, 'ssLocal'),
@@ -52,6 +53,7 @@ if (module === require.main) {
   const type = process.argv[2];
   const argv = process.argv.slice(3);
   const { proxyOptions } = getConfig(argv);
+  logger = createLogger(proxyOptions.level, LOG_NAMES.DAEMON, false);
 
   daemon(type, proxyOptions, FORK_FILE_PATH[type]);
 }

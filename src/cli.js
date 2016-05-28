@@ -153,7 +153,7 @@ General options:
 }
 
 function startDaemon(isServer) {
-  // TODO: `node` or with path?
+    // TODO: `node` or with path?
   const child = spawn('node', [path.join(__dirname, 'daemon'), getDaemonType(isServer)]
     .concat(process.argv.slice(2)), SPAWN_OPTIONS);
 
@@ -208,7 +208,9 @@ function runDaemon(isServer, cmd) {
 }
 
 function runSingle(isServer, proxyOptions) {
-  return isServer ? ssServer.startServer(proxyOptions) : ssLocal.startServer(proxyOptions);
+  const willLogToConsole = true;
+  return isServer ? ssServer.startServer(proxyOptions, willLogToConsole)
+    : ssLocal.startServer(proxyOptions, willLogToConsole);
 }
 
 export default function client(isServer) {

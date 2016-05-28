@@ -23,6 +23,7 @@
   "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",
   "devDependencies": {
+    "async": "^2.0.0-rc.5",
     "babel-cli": "^6.6.5",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-es2015-loose": "^7.0.0",

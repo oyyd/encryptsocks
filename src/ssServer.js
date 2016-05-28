@@ -1,11 +1,13 @@
 import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause } from './utils';
-import logger, { changeLevel } from './logger';
+import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
 
 const NAME = 'ssServer';
+
+let logger;
 
 function createClientToDst(
   connection, data,
@@ -198,7 +200,7 @@ function handleConnection(config, connection) {
 
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config)).listen(config.serverPort);
-  const udpRelay = createUDPRelay(config, true);
+  const udpRelay = createUDPRelay(config, true, logger);
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -215,18 +217,14 @@ function createServer(config) {
   };
 }
 
-export function startServer(config) {
-  const level = config.level;
-
-  if (level) {
-    changeLevel(logger, level);
-  }
+export function startServer(config, willLogToConsole = false) {
+  logger = createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
 
   return createServer(config);
 }
 
 if (module === require.main) {
   process.on('message', config => {
-    startServer(config);
+    startServer(config, false);
   });
 }

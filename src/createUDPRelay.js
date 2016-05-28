@@ -1,5 +1,4 @@
 import dgram from 'dgram';
-import logger from './logger';
 import { getDstInfoFromUDPMsg, sendDgram, closeSilently } from './utils';
 import LRU from 'lru-cache';
 import * as encryptor from './encryptor';
@@ -57,7 +56,7 @@ function getIndex({ address, port }, { dstAddrStr, dstPortNum }) {
   return `${address}:${port}_${dstAddrStr}:${dstPortNum}`;
 }
 
-function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
+function createClient(logger, { atyp, dstAddr, dstPort }, onMsg, onClose) {
   const udpType = (atyp === 1 ? 'udp4' : 'udp6');
   const socket = dgram.createSocket(udpType);
 
@@ -72,7 +71,7 @@ function createClient({ atyp, dstAddr, dstPort }, onMsg, onClose) {
   return socket;
 }
 
-function _createUDPRelay(udpType, config, isServer) {
+function _createUDPRelay(udpType, config, isServer, logger) {
   const {
     localPort, serverPort,
     password, method,
@@ -106,7 +105,7 @@ function _createUDPRelay(udpType, config, isServer) {
     let client = cache.get(index);
 
     if (!client) {
-      client = createClient(dstInfo, _incomeMsg => {
+      client = createClient(logger, dstInfo, _incomeMsg => {
         // socket on message
         const incomeMsg = (isServer ? encrypt(_incomeMsg) : decrypt(_incomeMsg));
         sendDgram(socket, incomeMsg, rinfo.port, rinfo.address);
@@ -154,8 +153,8 @@ function close(sockets) {
   });
 }
 
-export default function createUDPRelay(config, isServer) {
-  const sockets = SOCKET_TYPE.map(udpType => _createUDPRelay(udpType, config, isServer));
+export default function createUDPRelay(config, isServer, logger) {
+  const sockets = SOCKET_TYPE.map(udpType => _createUDPRelay(udpType, config, isServer, logger));
   return {
     sockets,
     close: close.bind(null, sockets),

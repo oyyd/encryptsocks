@@ -2,9 +2,10 @@ import { createServer } from 'http';
 import Socks from 'socks';
 
 import { closeSilently } from './utils';
-import logger from './logger';
 
 const NAME = 'httpProxy';
+
+let logger;
 
 function createSocksOptions({ localAddr, localPort }, host, port) {
   return {
@@ -64,7 +65,9 @@ function createSocksRequest(config, { host, port, method }, cliSocket, chunk) {
   });
 }
 
-export default function createHTTPProxy(config) {
+export default function createHTTPProxy(config, _logger) {
+  logger = _logger;
+
   const server = createServer().listen(config.HTTPProxyPort);
 
   server.on('connect', (req, socket, chunk) => {

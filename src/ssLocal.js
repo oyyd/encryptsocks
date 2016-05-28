@@ -1,12 +1,14 @@
 import ip from 'ip';
 import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause, getDstStr, closeSilently } from './utils';
-import logger, { changeLevel } from './logger';
+import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import createHTTPProxy from './createHTTPProxy';
 
 const NAME = 'ssLocal';
+
+let logger;
 
 function handleMethod(connection, data) {
   // +----+----------+----------+
@@ -279,8 +281,8 @@ function closeAll() {
 
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config));
-  const udpRelay = createUDPRelay(config, false);
-  const httpProxyServer = config.enableHTTPProxy ? createHTTPProxy(config) : null;
+  const udpRelay = createUDPRelay(config, false, logger);
+  const httpProxyServer = config.enableHTTPProxy ? createHTTPProxy(config, logger) : null;
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -300,18 +302,14 @@ function createServer(config) {
   };
 }
 
-export function startServer(config) {
-  const level = config.level;
-
-  if (level) {
-    changeLevel(logger, level);
-  }
+export function startServer(config, willLogToConsole = false) {
+  logger = createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
 
   return createServer(config);
 }
 
 if (module === require.main) {
   process.on('message', config => {
-    startServer(config);
+    startServer(config, false);
   });
 }
