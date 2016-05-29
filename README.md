@@ -13,7 +13,7 @@ And I have found that many of who are familiar with [shadowsocks-nodejs](https:/
 
 ### Benchmark
 
-You get see the benchmark details [here](benchmark/README.md) and even test your own shadowsocks implementation.
+You can get the benchmark details [here](benchmark/README.md) and even test your own shadowsocks implementation.
 
 After some simple benchmarks that compare both the node and python implementation, my conclusion is:
 
