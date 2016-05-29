@@ -4,7 +4,6 @@ import { getDstInfo, writeOrPause, getDstStr, closeSilently } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
-import createHTTPProxy from './createHTTPProxy';
 
 const NAME = 'ssLocal';
 
@@ -282,7 +281,6 @@ function closeAll() {
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config));
   const udpRelay = createUDPRelay(config, false, logger);
-  const httpProxyServer = config.enableHTTPProxy ? createHTTPProxy(config, logger) : null;
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -297,7 +295,7 @@ function createServer(config) {
   logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
-    server, udpRelay, httpProxyServer,
+    server, udpRelay,
     closeAll,
   };
 }

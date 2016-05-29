@@ -9,9 +9,13 @@ Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](
 
 Shadowsocks is a light weight and efficient tunnel proxy and __nodejs is a very good choice to achieve both flexibility and good performance in this situation__.
 
-And I have found that many of who are familiar with [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) may be curious about the memory usage in so that I have finished some simple benchmark to .
+And I have found that many of who are familiar with [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) may be curious about the memory usage in so that I have finished some simple benchmark to measure their behaviors.
 
-After some simple benchmarks comparing both the node and python implementation, my conclusion is:
+### Benchmark
+
+You get see the benchmark details [here](benchmark/README.md) and even test your own shadowsocks implementation.
+
+After some simple benchmarks that compare both the node and python implementation, my conclusion is:
 
 1. Node has a different GC strategy but it's, of course, able to keep thousands of connections with a reasonable memory usage. [It's not a bug, it's a conscious time/space trade-off](https://github.com/nodejs/node-v0.x-archive/issues/4525).
 
@@ -20,8 +24,6 @@ After some simple benchmarks comparing both the node and python implementation, 
 3. Node implementation is less likely to fail the request in high concurrency situation.
 
 And the higher concurrency benchmarks may be meaningless as the bandwidth and network environment would become the actual bottleneck in the real world.
-
-You get see the benchmark details [here](benchmark/README.md) and even test your own shadowsocks implementation.
 
 **Do Please** point out my faults if I have missed something or get something wrong.
 
