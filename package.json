@@ -18,7 +18,8 @@
     "watch": "babel src --watch --out-dir lib",
     "lint": "eslint src",
     "test": "istanbul cover _mocha",
-    "travis-ci-test": "istanbul cover _mocha -- --fgrep '[local only]' --invert "
+    "travis-ci-test": "istanbul cover _mocha -- --fgrep '[local only]' --invert",
+    "benchmark": "node benchmark/run"
   },
   "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",

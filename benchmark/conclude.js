@@ -27,6 +27,7 @@ function getData(data) {
 
   errorRates = `${errorRates / data.length * 100}%`;
   averageTime /= validCount;
+  averageTime = `${averageTime}ms`;
 
   return {
     errorRates, averageTime, timeout,

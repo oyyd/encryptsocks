@@ -1,20 +1,17 @@
 const http = require('http');
+const { fileSize } = require('./config');
 
 const PORT = 8808;
-const RESPONSE = Buffer.alloc(1024 * 512, '0');
+const RESPONSE = Buffer.alloc(fileSize * 1024, '0');
 
 function createServer(next) {
   let total = 0;
-  let current = 0;
 
   const logInterval = setInterval(() => {
-    console.log(`total: ${total}, current: ${current}, memory: ${process.memoryUsage().rss / 1024 / 1024}`);
+    console.log(`receive total: ${total}`);
   }, 1000);
 
   const server = http.createServer((req, res) => {
-    res.once('finish', () => {
-      current -= 1;
-    });
     res.end(RESPONSE);
   });
 
@@ -22,7 +19,6 @@ function createServer(next) {
 
   server.on('connection', () => {
     total += 1;
-    current += 1;
   });
 
   server.listen(PORT, next);

@@ -52,14 +52,10 @@ function handler(time, onEnd, incomingMsg) {
 
 function _send(options, index, next) {
   let req = null;
-  let isTimeout = false;
-  let err = null;
   let result = null;
-  let isSocketConnected = false;
-
   const time = getStartTimePoint();
+
   const _handler = handler.bind(null, time, (_err, _result) => {
-    err = _err;
     result = _result;
   });
 
@@ -69,18 +65,7 @@ function _send(options, index, next) {
     req = request(options, _handler);
   }
 
-  // req.once('socket', socket => {
-  //   socket.on('connect', () => {
-  //     isSocketConnected = true;
-  //   });
-  // });
-
   req.setTimeout(timeout, () => {
-    isTimeout = true;
-    // if (!isSocketConnected) {
-    //   console.log('idle');
-    // }
-    err = null;
     result = {
       err: ERROR_TYPES.TIMEOUT,
     };
@@ -88,14 +73,13 @@ function _send(options, index, next) {
   });
 
   req.on('error', () => {
-    err = null;
     result = {
       err: ERROR_TYPES.UNEXPECTED,
     };
   });
 
   req.on('close', () => {
-    next(err, result || {
+    next(null, result || {
       err: ERROR_TYPES.UNEXPECTED,
     });
   });

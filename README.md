@@ -5,9 +5,31 @@
 
 Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
 
+## Why another Nodejs implementation?
+
+Shadowsocks is a light weight and efficient tunnel proxy and __nodejs is a very good choice to achieve both flexibility and good performance in this situation__.
+
+And I have found that many of who are familiar with [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) may be curious about the memory usage in so that I have finished some simple benchmark to .
+
+After some simple benchmarks comparing both the node and python implementation, my conclusion is:
+
+1. Node has a different GC strategy but it's, of course, able to keep thousands of connections with a reasonable memory usage. [It's not a bug, it's a conscious time/space trade-off](https://github.com/nodejs/node-v0.x-archive/issues/4525).
+
+2. Each request would cost less time to be responsed (even 50% less time in some situations).
+
+3. Node implementation is less likely to fail the request in high concurrency situation.
+
+And the higher concurrency benchmarks may be meaningless as the bandwidth and network environment would become the actual bottleneck in the real world.
+
+You get see the benchmark details [here](benchmark/README.md) and even test your own shadowsocks implementation.
+
+**Do Please** point out my faults if I have missed something or get something wrong.
+
 ## Requirement
 
 node >= v4
+
+It's recommended to use node v6 to achieve better performance.
 
 Shadowsocks-js has been tested in osx and ubuntu 14 but it's also expected to work in
 windows.
@@ -90,6 +112,8 @@ $ serverssjs -c config.json
 
 You can change default config in `config.json` file of your global shadowsocks-js
 package.
+
+## [Optimizing Shadowsocks](https://github.com/Long-live-shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
 
 ## Encryption methods
 

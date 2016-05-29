@@ -20,6 +20,8 @@ const PROXY_ARGUMENT_PAIR = {
   m: 'method',
   t: 'timeout',
   level: 'level',
+  // private
+  mem: '_recordMemoryUsage',
 };
 
 const GENERAL_ARGUMENT_PAIR = {
@@ -131,7 +133,7 @@ export function getConfig(argv) {
 function logHelp(invalidOption) {
   log(
 `
-${(invalidOption ? `${invalidOption}\n` : null)}shadowsock-js ${version}
+${(invalidOption ? `${invalidOption}\n` : null)}shadowsocks-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:

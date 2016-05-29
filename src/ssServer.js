@@ -4,6 +4,7 @@ import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
+import { INTERVAL_TIME } from './recordMemoryUsage';
 
 const NAME = 'ssServer';
 
@@ -226,5 +227,12 @@ export function startServer(config, willLogToConsole = false) {
 if (module === require.main) {
   process.on('message', config => {
     startServer(config, false);
+
+    // NOTE: DEV only
+    if (config._recordMemoryUsage) {
+      setInterval(() => {
+        process.send(process.memoryUsage());
+      }, INTERVAL_TIME);
+    }
   });
 }

@@ -11,7 +11,7 @@ function getFileName(type) {
     case 'server':
       return join(TMP_PATH, 'server.pid');
     default:
-      throw new Error('invalid `type` of filename');
+      throw new Error(`invalid 'type' of filename ${type}`);
   }
 }
 
