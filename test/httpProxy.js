@@ -5,13 +5,12 @@ const shttps = require('socks5-https-client');
 const http = require('http');
 const assert = require('assert');
 const ip = require('ip');
-const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
 
 const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
-const _config = require('../config.json');
+const _config = require('../lib/defaultConfig.js').default;
 
 const config = Object.assign({}, _config, {
   'level': 'error',

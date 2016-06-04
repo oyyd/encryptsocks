@@ -17,14 +17,15 @@
     "build": "rm -rf lib && babel src --out-dir lib && eslint src",
     "watch": "babel src --watch --out-dir lib",
     "lint": "eslint src",
-    "test": "istanbul cover _mocha",
-    "travis-ci-test": "istanbul cover _mocha -- --fgrep '[local only]' --invert",
+    "test": "mocha",
+    "test-coverage": "istanbul cover _mocha",
+    "travis-ci-test": "mocha --fgrep '[local only]' --invert",
+    "travis-ci-test-coverage": "istanbul cover _mocha -- --fgrep '[local only]' --invert",
     "benchmark": "node benchmark/run"
   },
   "author": "oyyd (oyydoibh@gmail.com)",
   "license": "BSD",
   "devDependencies": {
-    "async": "^2.0.0-rc.5",
     "babel-cli": "^6.6.5",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-es2015-loose": "^7.0.0",
@@ -37,10 +38,12 @@
     "socks5-https-client": "^1.1.2"
   },
   "dependencies": {
+    "async": "^2.0.0-rc.5",
     "ip": "^1.1.3",
     "lru-cache": "^4.0.1",
     "minimist": "^1.2.0",
-    "winston": "^2.2.0",
-    "socks": "^1.1.9"
+    "socks": "^1.1.9",
+    "uglify-js": "^2.6.2",
+    "winston": "^2.2.0"
   }
 }

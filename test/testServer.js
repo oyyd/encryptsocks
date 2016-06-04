@@ -5,7 +5,7 @@ const https = require('https');
 const dgram = require('dgram');
 const Socks = require('socks');
 const ip = require('ip');
-const config = require('../config.json');
+const config = require('../lib/defaultConfig.js').default;
 
 const DST_RES_TEXT = 'hello world!';
 const DST_ADDR = '127.0.0.1';

@@ -6,7 +6,7 @@ const utils = require('../lib/utils');
 const testServer = require('./testServer');
 const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
-const _config = require('../config.json');
+const _config = require('../lib/defaultConfig.js').default;
 const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
 
 const config = Object.assign({}, _config, {
@@ -82,8 +82,7 @@ describe('UDP Relay', () => {
 
   after(() => {
     dstServer.close();
-    ssLocalServer.server.close();
-    ssLocalServer.udpRelay.close();
+    ssLocalServer.closeAll();
     ssServerServer.server.close();
     ssServerServer.udpRelay.close();
   });

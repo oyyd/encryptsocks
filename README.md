@@ -60,6 +60,7 @@ Proxy options:
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
   -t TIMEOUT             timeout in seconds, default: 600
+  --pac_port PAC_PORT    PAC file server port, default: 8090
   --level LOG_LEVEL      log level, default: warn,
                          example: --level verbose
 

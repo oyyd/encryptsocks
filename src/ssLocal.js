@@ -3,6 +3,7 @@ import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause, getDstStr, closeSilently } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
+import { createPACServer } from './pacServer';
 import createUDPRelay from './createUDPRelay';
 
 const NAME = 'ssLocal';
@@ -272,6 +273,7 @@ function handleConnection(config, connection) {
 
 function closeAll() {
   closeSilently(this.server);
+  this.pacServer.close();
   this.udpRelay.close();
   if (this.httpProxyServer) {
     this.httpProxyServer.close();
@@ -281,6 +283,7 @@ function closeAll() {
 function createServer(config) {
   const server = _createServer(handleConnection.bind(null, config));
   const udpRelay = createUDPRelay(config, false, logger);
+  const pacServer = createPACServer(config, logger);
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -295,7 +298,7 @@ function createServer(config) {
   logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
-    server, udpRelay,
+    server, udpRelay, pacServer,
     closeAll,
   };
 }

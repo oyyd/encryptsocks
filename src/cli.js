@@ -14,6 +14,7 @@ const PROXY_ARGUMENT_PAIR = {
   c: 'configFilePath',
   s: 'serverAddr',
   p: 'serverPort',
+  pac_port: 'pacServerPort',
   l: 'localAddr',
   b: 'localPort',
   k: 'password',
@@ -120,7 +121,7 @@ function readConfig(_filePath) {
   return JSON.parse(readFileSync(filePath));
 }
 
-export function getConfig(argv) {
+export function getConfig(argv = []) {
   const { generalOptions, proxyOptions, invalidOption } = getArgvOptions(argv);
   const specificFileConfig = readConfig(proxyOptions.configFilePath) || fileConfig;
 
@@ -145,6 +146,7 @@ Proxy options:
   -k PASSWORD            password
   -m METHOD              encryption method, default: aes-128-cfb
   -t TIMEOUT             timeout in seconds, default: 600
+  --pac_port PAC_PORT    PAC file server port, default: 8090
   --level LOG_LEVEL      log level, default: warn
                          example: --level verbose
 General options:
