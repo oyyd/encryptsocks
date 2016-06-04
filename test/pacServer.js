@@ -1,4 +1,4 @@
-const { request } = require('http');
+const http = require('http');
 const url = require('url');
 const utils = require('../lib/gfwlistUtils');
 const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
@@ -11,6 +11,7 @@ const readLine = utils.readLine;
 const createListArrayString = utils.createListArrayString;
 const updateGFWList = utils.updateGFWList;
 const createPACServer = pacServer.createPACServer;
+const request = http.request;
 
 // NOTE: this will take a lot of time
 xdescribe(LOCAL_ONLY + ' requestGFWList', function() {
