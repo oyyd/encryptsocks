@@ -1,5 +1,43 @@
 import ip from 'ip';
 import { accessSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { writeFileSync } from 'fs';
+
+const DEFAULT_PATH = join(__dirname, '../logs/debug.log');
+
+export function fileLog(content, path = DEFAULT_PATH) {
+  writeFileSync(path, content);
+}
+
+// NOTE: https://github.com/winstonjs/winston/issues/228
+// Winston will log things asynchronously so we have to
+// make sure it has log the error before exiting this
+// process.
+// And this is disappointing.
+export function createSafeAfterHandler(logger, next) {
+  let numFlushes = 0;
+  let numFlushed = 0;
+
+  return () => {
+    Object.keys(logger.transports).forEach((k) => {
+      const stream = logger.transports[k]._stream;
+      if (stream) {
+        numFlushes += 1;
+        stream.once('finish', () => {
+          numFlushed += 1;
+          if (numFlushes === numFlushed) {
+            next();
+          }
+        });
+        stream.end();
+      }
+    });
+
+    if (numFlushes === 0) {
+      next();
+    }
+  };
+}
 
 export function closeSilently(server) {
   if (server) {

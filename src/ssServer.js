@@ -1,12 +1,12 @@
 import { createServer as _createServer, connect } from 'net';
-import { getDstInfo, writeOrPause } from './utils';
+import { getDstInfo, writeOrPause, createSafeAfterHandler } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
 import ip from 'ip';
 import { INTERVAL_TIME } from './recordMemoryUsage';
 
-const NAME = 'ssServer';
+const NAME = 'ss_server';
 
 let logger;
 
@@ -219,13 +219,15 @@ function createServer(config) {
 }
 
 export function startServer(config, willLogToConsole = false) {
-  logger = createLogger(config.level, LOG_NAMES.SERVER, willLogToConsole);
+  logger = logger || createLogger(config.level, LOG_NAMES.SERVER, willLogToConsole);
 
   return createServer(config);
 }
 
 if (module === require.main) {
   process.on('message', config => {
+    logger = createLogger(config.level, LOG_NAMES.SERVER, false);
+
     startServer(config, false);
 
     // NOTE: DEV only
@@ -234,5 +236,11 @@ if (module === require.main) {
         process.send(process.memoryUsage());
       }, INTERVAL_TIME);
     }
+  });
+
+  process.on('uncaughtException', err => {
+    logger.error(`${NAME} uncaughtException: ${err.stack}`, createSafeAfterHandler(logger, () => {
+      process.exit(1);
+    }));
   });
 }

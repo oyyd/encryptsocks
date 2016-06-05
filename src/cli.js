@@ -9,6 +9,7 @@ import fileConfig from '../config.json';
 import * as ssLocal from './ssLocal';
 import * as ssServer from './ssServer';
 import { getPid, writePidFile, deletePidFile } from './pid';
+import { updateGFWList as _updateGFWList, GFWLIST_FILE_PATH } from './gfwlistUtils';
 
 const PROXY_ARGUMENT_PAIR = {
   c: 'configFilePath',
@@ -29,6 +30,7 @@ const GENERAL_ARGUMENT_PAIR = {
   h: 'help',
   help: 'help',
   d: 'daemon',
+  pac_update_gfwlist: 'pacUpdateGFWList',
 };
 
 const SPAWN_OPTIONS = {
@@ -147,6 +149,8 @@ Proxy options:
   -m METHOD              encryption method, default: aes-128-cfb
   -t TIMEOUT             timeout in seconds, default: 600
   --pac_port PAC_PORT    PAC file server port, default: 8090
+  --pac_update_gfwlist   [localssjs] Update the gfwlist
+                         for PAC server
   --level LOG_LEVEL      log level, default: warn
                          example: --level verbose
 General options:
@@ -154,6 +158,18 @@ General options:
   -d start/stop/restart  daemon mode
 `
   );
+}
+
+function updateGFWList() {
+  log('Updating gfwlist...');
+
+  _updateGFWList(err => {
+    if (err) {
+      throw err;
+    } else {
+      log(`Updating finished. You can checkout the file here: ${GFWLIST_FILE_PATH}`);
+    }
+  });
 }
 
 function startDaemon(isServer) {
@@ -223,6 +239,8 @@ export default function client(isServer) {
 
   if (generalOptions.help || invalidOption) {
     logHelp(invalidOption);
+  } else if (generalOptions.pacUpdateGFWList) {
+    updateGFWList();
   } else if (generalOptions.daemon) {
     runDaemon(isServer, generalOptions.daemon);
   } else {

@@ -5,6 +5,7 @@ import { parse } from 'url';
 import { writeFile, readFileSync } from 'fs';
 import { minify } from 'uglify-js';
 
+export const GFWLIST_FILE_PATH = join(__dirname, '../pac/gfwlist.txt');
 const DEFAULT_CONFIG = {
   localAddr: '127.0.0.1',
   localPort: '1080',
@@ -122,13 +123,13 @@ function minifyCode(code) {
 // TODO: async this
 export function getPACFileContent(_config) {
   const config = _config || DEFAULT_CONFIG;
-  const listText = readFileSync(join(__dirname, '../pac/gfwlist.txt'), { encoding: 'utf8' });
+  const listText = readFileSync(GFWLIST_FILE_PATH, { encoding: 'utf8' });
 
   return minifyCode(createPACFileContent(listText, config));
 }
 
 function writeGFWList(listBuffer, next) {
-  writeFile(join(__dirname, '../pac/gfwlist.txt'), listBuffer, next);
+  writeFile(GFWLIST_FILE_PATH, listBuffer, next);
 }
 
 export function updateGFWList(next) {

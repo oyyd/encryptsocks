@@ -1,12 +1,13 @@
 import ip from 'ip';
 import { createServer as _createServer, connect } from 'net';
-import { getDstInfo, writeOrPause, getDstStr, closeSilently } from './utils';
+import { getDstInfo, writeOrPause, getDstStr, closeSilently,
+  createSafeAfterHandler } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import { createPACServer } from './pacServer';
 import createUDPRelay from './createUDPRelay';
 
-const NAME = 'ssLocal';
+const NAME = 'ss_local';
 
 let logger;
 
@@ -273,7 +274,7 @@ function handleConnection(config, connection) {
 
 function closeAll() {
   closeSilently(this.server);
-  this.pacServer.close();
+  closeSilently(this.pacServer);
   this.udpRelay.close();
   if (this.httpProxyServer) {
     this.httpProxyServer.close();
@@ -298,19 +299,27 @@ function createServer(config) {
   logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
-    server, udpRelay, pacServer,
+    server, udpRelay,
+    pacServer,
     closeAll,
   };
 }
 
 export function startServer(config, willLogToConsole = false) {
-  logger = createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
+  logger = logger || createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
 
   return createServer(config);
 }
 
 if (module === require.main) {
   process.on('message', config => {
+    logger = createLogger(config.level, LOG_NAMES.LOCAL, false);
     startServer(config, false);
+  });
+
+  process.on('uncaughtException', err => {
+    logger.error(`${NAME} uncaughtException: ${err.stack} `, createSafeAfterHandler(logger, () => {
+      process.exit(1);
+    }));
   });
 }

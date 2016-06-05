@@ -39,7 +39,7 @@ import ip from 'ip';
 // | Fixed |   Variable   |
 // +-------+--------------+
 
-const NAME = 'UDP relay';
+const NAME = 'udp_relay';
 const LRU_OPTIONS = {
   max: 1000,
   maxAge: 10 * 1000,

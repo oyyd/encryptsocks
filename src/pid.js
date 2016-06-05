@@ -38,5 +38,9 @@ export function writePidFile(type, pid) {
 export function deletePidFile(type) {
   mkdirIfNotExistSync(TMP_PATH);
 
-  unlinkSync(getFileName(type));
+  try {
+    unlinkSync(getFileName(type));
+  } catch (err) {
+    // alreay unlinked
+  }
 }
