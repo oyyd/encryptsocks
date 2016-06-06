@@ -119,6 +119,7 @@ $ localssjs --pac_update_gfwlist http://firefoxfan.cc/gfwlist/gfwlist.txt
   "serverPort": 8083,
   "localAddr": "127.0.0.1",
   "localPort": 1080,
+  "pacServerPort": 8090,
   "password": "YOUR_PASSWORD_HERE",
   "timeout": 600,
   "method": "aes-128-cfb",
