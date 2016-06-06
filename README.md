@@ -5,6 +5,12 @@
 
 Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
 
+* [Why another Nodejs implementation? (with Benchmark)](https://github.com/oyyd/shadowsocks-js#why-another-nodejs-implementation)
+* [CLI](https://github.com/oyyd/shadowsocks-js#cli)
+* [Examples](https://github.com/oyyd/shadowsocks-js#examples)
+* [Config](https://github.com/oyyd/shadowsocks-js#config)
+
+
 ## Why another Nodejs implementation?
 
 Shadowsocks is a light weight and efficient proxy tunnel and __nodejs is a very good choice to achieve both flexibility and good performance in this situation__.
