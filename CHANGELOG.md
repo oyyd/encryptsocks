@@ -2,7 +2,7 @@
 
 ## 1.1.0
 
-* Core: Add pac file server
+* Core: Add .pac file server
   * Update rules from gfwlist
   * Support adding user rules
 

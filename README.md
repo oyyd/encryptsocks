@@ -44,7 +44,9 @@ $ npm i -g shadowsocks-js
 
 ## CLI
 
-Use `localssjs` (local ssjs) to start clients to communicate with applications. You may prefer to navigate [clients page](https://shadowsocks.org/en/download/clients.html) and choose clients for your devices instead of using `localssjs`.
+Use `localssjs` (local ssjs) to start clients to communicate with applications. The `localssjs` server will also serve a [pac](https://en.wikipedia.org/wiki/PAC) file at `http://127.0.0.1:8090` (by default) for your apps to avoid unnecessary tunnel work.
+
+You may prefer to navigate [clients page](https://shadowsocks.org/en/download/clients.html) and choose clients for your devices instead of using `localssjs`.
 
 Use `serverssjs` (server ssjs) to start your remote server.
 
@@ -52,21 +54,23 @@ Use `localssjs -h` or `serverssjs -h` to show cli options:
 
 ```
 Proxy options:
-  -c config              path to config file
-  -s SERVER_ADDR         server address, default: 127.0.0.1
-  -p SERVER_PORT         server port, default: 8083
-  -l LOCAL_ADDR          local binding address, default: 127.0.0.1
-  -b LOCAL_PORT          local port, default: 1080
-  -k PASSWORD            password
-  -m METHOD              encryption method, default: aes-128-cfb
-  -t TIMEOUT             timeout in seconds, default: 600
-  --pac_port PAC_PORT    PAC file server port, default: 8090
-  --level LOG_LEVEL      log level, default: warn,
-                         example: --level verbose
-
+  -c config                     path to config file
+  -s SERVER_ADDR                server address, default: 127.0.0.1
+  -p SERVER_PORT                server port, default: 8083
+  -l LOCAL_ADDR                 local binding address, default: 127.0.0.1
+  -b LOCAL_PORT                 local port, default: 1080
+  -k PASSWORD                   password
+  -m METHOD                     encryption method, default: aes-128-cfb
+  -t TIMEOUT                    timeout in seconds, default: 600
+  --pac_port PAC_PORT           PAC file server port, default: 8090
+  --pac_update_gfwlist [URL]    [localssjs] Update the gfwlist
+                                for PAC server. You can specify the
+                                request URL.
+  --level LOG_LEVEL             log level, default: warn
+                                example: --level verbose
 General options:
-  -h, --help             show this help message and exit
-  -d start/stop/restart  daemon mode
+  -h, --help                    show this help message and exit
+  -d start/stop/restart         daemon mode
 ```
 
 ### Examples
@@ -87,6 +91,18 @@ Log verbosely:
 
 ```
 $ serverssjs -d start --level verbose
+```
+
+Update GFWList for your .pac file server:
+
+```
+$ localssjs --pac_update_gfwlist
+```
+
+Update GFWList for your .pac file server from a specific URL (default [url](https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt)):
+
+```
+$ localssjs --pac_update_gfwlist http://firefoxfan.cc/gfwlist/gfwlist.txt
 ```
 
 ## Config

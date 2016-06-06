@@ -1,6 +1,7 @@
 // NOTE: do not use these in local server
 import { join } from 'path';
 import { request } from 'https';
+import { request as httpRequest } from 'http';
 import { parse } from 'url';
 import { writeFile, readFileSync } from 'fs';
 import { minify } from 'uglify-js';
@@ -94,8 +95,11 @@ export function createPACFileContent(text, { localAddr, localPort }) {
   return `${SOCKS_STR}\n${rulesString}\n${matcherString}`;
 }
 
-export function requestGFWList(next) {
-  const req = request(parse(TARGET_URL), res => {
+export function requestGFWList(targetURL, next) {
+  const options = parse(targetURL);
+  const requestMethod = (~options.protocol.indexOf('https') ? request : httpRequest);
+
+  const req = requestMethod(options, res => {
     let data = null;
 
     res.on('data', chunk => {
@@ -132,8 +136,18 @@ function writeGFWList(listBuffer, next) {
   writeFile(GFWLIST_FILE_PATH, listBuffer, next);
 }
 
-export function updateGFWList(next) {
-  requestGFWList((err, listBuffer) => {
+export function updateGFWList(...args) {
+  let targetURL = TARGET_URL;
+  let next;
+
+  if (args.length === 1) {
+    next = args[0];
+  } else if (args.length === 2) {
+    targetURL = args[0];
+    next = args[1];
+  }
+
+  requestGFWList(targetURL, (err, listBuffer) => {
     if (err) {
       next(err);
       return;

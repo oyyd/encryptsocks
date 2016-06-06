@@ -136,40 +136,47 @@ export function getConfig(argv = []) {
 function logHelp(invalidOption) {
   log(
 `
-${(invalidOption ? `${invalidOption}\n` : null)}shadowsocks-js ${version}
+${(invalidOption ? `${invalidOption}\n` : '')}shadowsocks-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:
-  -c config              path to config file
-  -s SERVER_ADDR         server address, default: 127.0.0.1
-  -p SERVER_PORT         server port, default: 8083
-  -l LOCAL_ADDR          local binding address, default: 127.0.0.1
-  -b LOCAL_PORT          local port, default: 1080
-  -k PASSWORD            password
-  -m METHOD              encryption method, default: aes-128-cfb
-  -t TIMEOUT             timeout in seconds, default: 600
-  --pac_port PAC_PORT    PAC file server port, default: 8090
-  --pac_update_gfwlist   [localssjs] Update the gfwlist
-                         for PAC server
-  --level LOG_LEVEL      log level, default: warn
-                         example: --level verbose
+  -c config                     path to config file
+  -s SERVER_ADDR                server address, default: 127.0.0.1
+  -p SERVER_PORT                server port, default: 8083
+  -l LOCAL_ADDR                 local binding address, default: 127.0.0.1
+  -b LOCAL_PORT                 local port, default: 1080
+  -k PASSWORD                   password
+  -m METHOD                     encryption method, default: aes-128-cfb
+  -t TIMEOUT                    timeout in seconds, default: 600
+  --pac_port PAC_PORT           PAC file server port, default: 8090
+  --pac_update_gfwlist [URL]    [localssjs] Update the gfwlist
+                                for PAC server. You can specify the
+                                request URL.
+  --level LOG_LEVEL             log level, default: warn
+                                example: --level verbose
 General options:
-  -h, --help             show this help message and exit
-  -d start/stop/restart  daemon mode
+  -h, --help                    show this help message and exit
+  -d start/stop/restart         daemon mode
 `
   );
 }
 
-function updateGFWList() {
+function updateGFWList(flag) {
   log('Updating gfwlist...');
 
-  _updateGFWList(err => {
+  const next = err => {
     if (err) {
       throw err;
     } else {
       log(`Updating finished. You can checkout the file here: ${GFWLIST_FILE_PATH}`);
     }
-  });
+  };
+
+  if (typeof flag === 'string') {
+    _updateGFWList(flag, next);
+  } else {
+    _updateGFWList(next);
+  }
 }
 
 function startDaemon(isServer) {
@@ -240,7 +247,7 @@ export default function client(isServer) {
   if (generalOptions.help || invalidOption) {
     logHelp(invalidOption);
   } else if (generalOptions.pacUpdateGFWList) {
-    updateGFWList();
+    updateGFWList(generalOptions.pacUpdateGFWList);
   } else if (generalOptions.daemon) {
     runDaemon(isServer, generalOptions.daemon);
   } else {

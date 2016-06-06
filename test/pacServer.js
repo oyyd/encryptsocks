@@ -25,6 +25,17 @@ xdescribe(LOCAL_ONLY + ' requestGFWList', function() {
       cb();
     });
   });
+
+  it('should get gfwlist with specify url', function(cb) {
+    const targetURL = 'http://firefoxfan.cc/gfwlist/gfwlist.txt';
+
+    updateGFWList(targetURL, err => {
+      if (err) {
+        throw err;
+      }
+      cb();
+    });
+  });
 });
 
 describe('requestGFWList', function() {
