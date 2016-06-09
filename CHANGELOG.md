@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+* Bug fix: `getDstInfo` may return buffers with zero length and throw uncaught error when reading these buffers
+
 ## 1.1.0
 
 * Core: Add .pac file server
