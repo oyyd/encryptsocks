@@ -10,7 +10,6 @@ Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](
 * [Examples](https://github.com/oyyd/shadowsocks-js#examples)
 * [Config](https://github.com/oyyd/shadowsocks-js#config)
 
-
 ## Why another Nodejs implementation?
 
 Shadowsocks is a light weight and efficient proxy tunnel and __nodejs is a very good choice to achieve both flexibility and good performance in this situation__.

@@ -1,1 +1,12 @@
+# .gitignore
+.DS_Store
+**/node_modules
+research
+**.log
+tmp
+logs
+TODO.md
+/coverage
+deprecated
+
 benchmark

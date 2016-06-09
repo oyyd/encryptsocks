@@ -107,6 +107,10 @@ function _getDstInfo(data, offset) {
       return null;
   }
 
+  if (data.length < totalLength) {
+    return null;
+  }
+
   return {
     atyp, dstAddrLength, dstAddr, dstPort,
     totalLength,
