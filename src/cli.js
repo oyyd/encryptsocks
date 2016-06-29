@@ -10,6 +10,7 @@ import * as ssLocal from './ssLocal';
 import * as ssServer from './ssServer';
 import { getPid, writePidFile, deletePidFile } from './pid';
 import { updateGFWList as _updateGFWList, GFWLIST_FILE_PATH } from './gfwlistUtils';
+import { safelyKill } from './utils';
 
 const PROXY_ARGUMENT_PAIR = {
   c: 'configFilePath',
@@ -52,9 +53,11 @@ function getDaemonType(isServer) {
 
 function isRunning(pid) {
   try {
+    // signal 0 to test existence
     return process.kill(pid, 0);
   } catch (e) {
-    return e.code === 'EPERM';
+    // NOTE: 'EPERM' permissions, 'ESRCH' process group doesn't exist
+    return e.code !== 'ESRCH';
   }
 }
 
@@ -196,8 +199,8 @@ function startDaemon(isServer) {
 
 function stopDaemon(isServer, pid) {
   if (pid) {
-    process.kill(pid, 'SIGHUP');
     deletePidFile(getDaemonType(isServer));
+    safelyKill(pid, 'SIGHUP');
     log('stop');
   } else {
     log('already stopped');
