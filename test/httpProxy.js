@@ -170,7 +170,7 @@ describe('http proxy', () => {
   after(() => {
     dstServer.close();
     ssLocalServer.closeAll();
-    ssServerServer.server.close();
+    ssServerServer.tcpRelay.close();
     ssServerServer.udpRelay.close();
   });
 });

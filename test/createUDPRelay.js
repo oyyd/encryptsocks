@@ -83,7 +83,7 @@ describe('UDP Relay', () => {
   after(() => {
     dstServer.close();
     ssLocalServer.closeAll();
-    ssServerServer.server.close();
+    ssServerServer.tcpRelay.close();
     ssServerServer.udpRelay.close();
   });
 });
@@ -126,7 +126,7 @@ describe(LOCAL_ONLY + ' UDP6 Relay', () => {
   after(() => {
     dstServerUDP6.close();
     ssLocalServer.closeAll();
-    ssServerServer.server.close();
+    ssServerServer.tcpRelay.close();
     ssServerServer.udpRelay.close();
   });
 });
