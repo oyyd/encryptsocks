@@ -54,10 +54,10 @@ function getDaemonType(isServer) {
 function isRunning(pid) {
   try {
     // signal 0 to test existence
-    return safelyKill(pid, 0);
+    return process.kill(pid, 0);
   } catch (e) {
-    // TODO: 'EPERM' permissions, 'ESRCH' process group doesn't exist
-    return e.code === 'EPERM';
+    // NOTE: 'EPERM' permissions, 'ESRCH' process group doesn't exist
+    return e.code !== 'ESRCH';
   }
 }
 
@@ -199,8 +199,8 @@ function startDaemon(isServer) {
 
 function stopDaemon(isServer, pid) {
   if (pid) {
-    safelyKill(pid, 'SIGHUP');
     deletePidFile(getDaemonType(isServer));
+    safelyKill(pid, 'SIGHUP');
     log('stop');
   } else {
     log('already stopped');

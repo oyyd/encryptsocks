@@ -17,7 +17,7 @@ export function isWindows() {
 }
 
 export function safelyKill(pid, signal) {
-  if (typeof pid !== 'number') {
+  if (pid === null || pid === undefined) {
     return;
   }
 

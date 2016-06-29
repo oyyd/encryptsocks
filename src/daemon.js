@@ -22,6 +22,7 @@ const MAX_RESTART_TIME = 1;
 
 let child = null;
 let logger;
+let shouldStop = false;
 
 export const FORK_FILE_PATH = {
   local: join(__dirname, 'ssLocal'),
@@ -44,6 +45,10 @@ function daemon(type, config, filePath, shouldRecordServerMemory, _restartTime) 
   }, 60 * 1000);
 
   child.on('exit', () => {
+    if (shouldStop) {
+      return;
+    }
+
     logger.warn(`${NAME}: process exit.`);
 
     safelyKillChild(child, 'SIGKILL');
@@ -73,6 +78,8 @@ if (module === require.main) {
   daemon(type, proxyOptions, FORK_FILE_PATH[type], shouldRecordServerMemory);
 
   process.on('SIGHUP', () => {
+    shouldStop = true;
+
     if (child) {
       safelyKillChild(child, 'SIGKILL');
     }
