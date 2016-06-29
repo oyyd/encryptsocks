@@ -1,5 +1,7 @@
 # Changelog
 
+* Bug fix: Windows do not accept kill signals.
+
 ## 1.1.1
 
 * Bug fix: `getDstInfo` may return buffers with zero length and throw uncaught error when reading these buffers

@@ -1,9 +1,32 @@
 import ip from 'ip';
+import os from 'os';
 import { accessSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { writeFileSync } from 'fs';
 
 const DEFAULT_PATH = join(__dirname, '../logs/debug.log');
+
+let platform = null;
+
+export function isWindows() {
+  if (!platform) {
+    platform = os.type();
+  }
+
+  return platform === 'Windows_NT';
+}
+
+export function safelyKillChild(child, signal) {
+  if (!child) {
+    return;
+  }
+
+  if (signal && !isWindows()) {
+    child.kill(signal);
+  } else {
+    child.kill();
+  }
+}
 
 export function fileLog(content, path = DEFAULT_PATH) {
   writeFileSync(path, content);

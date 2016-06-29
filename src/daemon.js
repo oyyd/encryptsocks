@@ -13,7 +13,7 @@ import { createLogger, LOG_NAMES } from './logger';
 import { getConfig } from './cli';
 import { deletePidFile } from './pid';
 import { record, stopRecord } from './recordMemoryUsage';
-import { createSafeAfterHandler } from './utils';
+import { createSafeAfterHandler, safelyKillChild } from './utils';
 
 const NAME = 'daemon';
 // TODO:
@@ -46,7 +46,7 @@ function daemon(type, config, filePath, shouldRecordServerMemory, _restartTime) 
   child.on('exit', () => {
     logger.warn(`${NAME}: process exit.`);
 
-    child.kill('SIGKILL');
+    safelyKillChild(child, 'SIGKILL');
 
     if (restartTime < MAX_RESTART_TIME) {
       daemon(type, config, filePath, shouldRecordServerMemory, restartTime + 1);
@@ -74,7 +74,7 @@ if (module === require.main) {
 
   process.on('SIGHUP', () => {
     if (child) {
-      child.kill('SIGKILL');
+      safelyKillChild(child, 'SIGKILL');
     }
 
     deletePidFile(type);
