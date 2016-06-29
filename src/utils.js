@@ -16,6 +16,18 @@ export function isWindows() {
   return platform === 'Windows_NT';
 }
 
+export function safelyKill(pid, signal) {
+  if (typeof pid !== 'number') {
+    return;
+  }
+
+  if (signal && !isWindows()) {
+    process.kill(pid, signal);
+  } else {
+    process.kill(pid);
+  }
+}
+
 export function safelyKillChild(child, signal) {
   if (!child) {
     return;
