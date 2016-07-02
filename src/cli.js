@@ -137,11 +137,11 @@ export function resolveServerAddr(config, next) {
   } else {
     lookup(serverAddr, (err, addresses) => {
       if (err) {
-        next(err, config);
+        next(new Error(`failed to resolve 'serverAddr': ${serverAddr}`), config);
       } else {
         // NOTE: mutate data
         config.proxyOptions.serverAddr = addresses; // eslint-disable-line
-        next(new Error(`failed to resolve 'serverAddr': ${serverAddr}`), config);
+        next(null, config);
       }
     });
   }

@@ -80,10 +80,10 @@ General options:
 
 ### Examples
 
-Start clients that bind at `1088`:
+Start clients that bind at `1088` and will connect to `MY.SSSERVER.DOMAIN`:
 
 ```
-$ localssjs -b 1088
+$ localssjs -b 1088 -s MY.SSSERVER.DOMAIN
 ```
 
 Start daemon:
