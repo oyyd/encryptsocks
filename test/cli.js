@@ -40,7 +40,7 @@ describe('cli', () => {
       };
 
       resolveServerAddr(config, err => {
-        assert(err.message.indexOf('failed to resolve \'serverAddr\''));
+        assert(err.message.indexOf('failed to resolve \'serverAddr\'') > -1);
         done();
       });
     });
