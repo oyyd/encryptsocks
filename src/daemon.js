@@ -70,32 +70,39 @@ function daemon(type, config, filePath, shouldRecordServerMemory, _restartTime) 
 if (module === require.main) {
   const type = process.argv[2];
   const argv = process.argv.slice(3);
-  const { proxyOptions } = getConfig(argv);
-  const shouldRecordServerMemory = proxyOptions._recordMemoryUsage && type === 'server';
 
-  logger = createLogger(proxyOptions.level, LOG_NAMES.DAEMON, false);
+  getConfig(argv, (err, config) => {
+    const { proxyOptions } = config;
+    const shouldRecordServerMemory = proxyOptions._recordMemoryUsage && type === 'server';
 
-  daemon(type, proxyOptions, FORK_FILE_PATH[type], shouldRecordServerMemory);
+    logger = createLogger(proxyOptions.level, LOG_NAMES.DAEMON, false);
 
-  process.on('SIGHUP', () => {
-    shouldStop = true;
-
-    if (child) {
-      safelyKillChild(child, 'SIGKILL');
+    if (err) {
+      logger.error(`${NAME}: ${err.message}`);
     }
 
-    deletePidFile(type);
+    daemon(type, proxyOptions, FORK_FILE_PATH[type], shouldRecordServerMemory);
 
-    if (shouldRecordServerMemory) {
-      stopRecord();
-    }
+    process.on('SIGHUP', () => {
+      shouldStop = true;
 
-    process.exit(0);
-  });
+      if (child) {
+        safelyKillChild(child, 'SIGKILL');
+      }
 
-  process.on('uncaughtException', err => {
-    logger.error(`${NAME} get error:\n${err.stack}`, createSafeAfterHandler(logger, () => {
-      process.exit(1);
-    }));
+      deletePidFile(type);
+
+      if (shouldRecordServerMemory) {
+        stopRecord();
+      }
+
+      process.exit(0);
+    });
+
+    process.on('uncaughtException', err => {
+      logger.error(`${NAME} get error:\n${err.stack}`, createSafeAfterHandler(logger, () => {
+        process.exit(1);
+      }));
+    });
   });
 }
