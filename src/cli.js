@@ -117,7 +117,7 @@ function readConfig(_filePath) {
     return null;
   }
 
-  const filePath = path.join(process.cwd(), _filePath);
+  const filePath = path.resolve(process.cwd(), _filePath);
 
   try {
     accessSync(filePath);

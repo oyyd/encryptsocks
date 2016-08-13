@@ -1,4 +1,12 @@
-# Changelog
+# CHANGELOG
+
+## master
+
+## 1.1.2
+
+* Core: Add domain resolving support.
+
+* Bug fix: The option `-c` resolved path incorrectly.
 
 * Bug fix: Windows do not accept kill signals.
 
