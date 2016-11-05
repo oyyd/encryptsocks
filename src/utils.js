@@ -1,12 +1,21 @@
 import ip from 'ip';
 import os from 'os';
-import { accessSync, mkdirSync } from 'fs';
+import { writeFileSync, accessSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { writeFileSync } from 'fs';
 
 const DEFAULT_PATH = join(__dirname, '../logs/debug.log');
 
 let platform = null;
+
+export const BufferFrom = (() => {
+  try {
+    Buffer.from('aa', 'hex');
+  } catch (err) {
+    return ((...args) => new Buffer(...args));
+  }
+
+  return Buffer.from;
+})();
 
 export function isWindows() {
   if (!platform) {
@@ -147,8 +156,7 @@ function _getDstInfo(data, offset) {
   }
 
   return {
-    atyp, dstAddrLength, dstAddr, dstPort,
-    totalLength,
+    atyp, dstAddrLength, dstAddr, dstPort, totalLength,
   };
 }
 
@@ -188,7 +196,7 @@ const formatKeyValues = {
 export function formatConfig(_config) {
   const formattedConfig = Object.assign({}, _config);
 
-  Object.keys(formatKeyValues).forEach(key => {
+  Object.keys(formatKeyValues).forEach((key) => {
     if (formattedConfig.hasOwnProperty(key)) {
       formattedConfig[formatKeyValues[key]] = formattedConfig[key];
       delete formattedConfig[key];

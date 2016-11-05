@@ -9,6 +9,7 @@ Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](
 * [CLI](https://github.com/oyyd/shadowsocks-js#cli)
 * [Examples](https://github.com/oyyd/shadowsocks-js#examples)
 * [Config](https://github.com/oyyd/shadowsocks-js#config)
+* [Authetication](https://github.com/oyyd/shadowsocks-js#socks5-username-password-authetication)
 
 ## Why another Nodejs implementation?
 
@@ -137,6 +138,12 @@ $ serverssjs -c config.json
 
 You can change default config in `config.json` file of your global shadowsocks-js
 package.
+
+## SOCKS5 Username Password Authetication
+
+__NOTE:__ This authetication is dangerous when sniffed.
+
+TODO:
 
 ## [Optimizing Shadowsocks](https://github.com/Long-live-shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
 

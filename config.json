@@ -9,5 +9,11 @@
 
   "level": "warn",
   "localAddrIPv6": "::1",
-  "serverAddrIPv6": "::1"
+  "serverAddrIPv6": "::1",
+  "auth": {
+    "forceAuth": false,
+    "usernamePassword": {
+      "oyyd": "12345678"
+    }
+  }
 }

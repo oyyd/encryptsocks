@@ -6,22 +6,34 @@ import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import { createPACServer } from './pacServer';
 import createUDPRelay from './createUDPRelay';
+import { createAuthInfo, validate } from './auth';
 
 const NAME = 'ss_local';
 
 let logger;
 
-function handleMethod(connection, data) {
+function handleMethod(connection, data, authInfo) {
   // +----+----------+----------+
   // |VER | NMETHODS | METHODS  |
   // +----+----------+----------+
   // | 1  |    1     | 1 to 255 |
   // +----+----------+----------+
+  const { forceAuth } = authInfo;
   const buf = new Buffer(2);
 
+  let method = -1;
+
+  if (forceAuth && data.indexOf(0x02, 2) >= 0) {
+    method = 2;
+  }
+
+  if (!forceAuth && data.indexOf(0x00, 2) >= 0) {
+    method = 0;
+  }
+
   // allow `no authetication` or any usename/password
-  if (!~data.indexOf(0x00, 2) && !~data.indexOf(0x02, 2)) {
-    logger.warn(`unsupported method: ${data.toString('hex')}`);
+  if (method === -1) {
+    // logger.warn(`unsupported method: ${data.toString('hex')}`);
     buf.writeUInt16BE(0x05FF);
     connection.write(buf);
     connection.end();
@@ -31,7 +43,56 @@ function handleMethod(connection, data) {
   buf.writeUInt16BE(0x0500);
   connection.write(buf);
 
-  return 1;
+  return method === 0 ? 1 : 3;
+}
+
+function fetchUsernamePassword(data) {
+  // suppose all VER is 0x01
+  if (!(data instanceof Buffer)) {
+    return null;
+  }
+
+  const ulen = data[1];
+  const username = data.slice(2, ulen + 2).toString('ascii');
+  const plenStart = ulen + 2;
+  const plen = data[plenStart];
+  const password = data.slice(plenStart + 1, plenStart + 1 + plen).toString('ascii');
+
+  return { username, password };
+}
+
+function responseAuth(success, connection) {
+  const buf = new Buffer(2);
+  const toWrite = success ? 0x0100 : 0x0101;
+  const nextProcedure = success ? 2 : -1;
+
+  buf.writeUInt16BE(toWrite);
+  connection.write(buf);
+  connection.end();
+
+  return nextProcedure;
+}
+
+export function usernamePasswordAuthetication(connection, data, authInfo) {
+  // +----+------+----------+------+----------+
+  // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
+  // +----+------+----------+------+----------+
+  // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
+  // +----+------+----------+------+----------+
+
+  const usernamePassword = fetchUsernamePassword(data);
+
+  if (!usernamePassword) {
+    return responseAuth(false, connection);
+  }
+
+  const { username, password } = usernamePassword;
+
+  if (!validate(authInfo, username, password)) {
+    return responseAuth(false, connection);
+  }
+
+  return responseAuth(true, connection);
 }
 
 function handleRequest(
@@ -103,7 +164,7 @@ function handleRequest(
     onConnect();
   });
 
-  clientToRemote.on('data', remoteData => {
+  clientToRemote.on('data', (remoteData) => {
     if (!decipher) {
       tmp = createDecipher(password, method, remoteData);
       if (!tmp) {
@@ -132,14 +193,14 @@ function handleRequest(
     connection.end();
   });
 
-  clientToRemote.on('error', e => {
+  clientToRemote.on('error', (e) => {
     logger.warn('ssLocal error happened in clientToRemote when'
       + ` connecting to ${getDstStr(dstInfo)}: ${e.message}`);
 
     onDestroy();
   });
 
-  clientToRemote.on('close', e => {
+  clientToRemote.on('close', (e) => {
     if (e) {
       connection.destroy();
     } else {
@@ -160,6 +221,8 @@ function handleRequest(
 }
 
 function handleConnection(config, connection) {
+  const { authInfo } = config;
+
   let stage = 0;
   let clientToRemote;
   let tmp;
@@ -169,10 +232,10 @@ function handleConnection(config, connection) {
   let clientConnected = true;
   let timer = null;
 
-  connection.on('data', data => {
+  connection.on('data', (data) => {
     switch (stage) {
       case 0:
-        stage = handleMethod(connection, data);
+        stage = handleMethod(connection, data, authInfo);
 
         break;
       case 1:
@@ -223,6 +286,10 @@ function handleConnection(config, connection) {
         writeOrPause(connection, clientToRemote, tmp);
 
         break;
+      case 3:
+        // rfc 1929 username/password authetication
+        stage = usernamePasswordAuthetication(connection, data, authInfo);
+        break;
       default:
         return;
     }
@@ -241,7 +308,7 @@ function handleConnection(config, connection) {
     }
   });
 
-  connection.on('close', e => {
+  connection.on('close', (e) => {
     if (timer) {
       clearTimeout(timer);
     }
@@ -257,7 +324,7 @@ function handleConnection(config, connection) {
     }
   });
 
-  connection.on('error', e => {
+  connection.on('error', (e) => {
     logger.warn(`${NAME} error happened in client connection: ${e.message}`);
   });
 
@@ -290,7 +357,7 @@ function createServer(config) {
     logger.warn(`${NAME} server closed`);
   });
 
-  server.on('error', e => {
+  server.on('error', (e) => {
     logger.error(`${NAME} server error: ${e.message}`);
   });
 
@@ -299,25 +366,40 @@ function createServer(config) {
   logger.verbose(`${NAME} is listening on ${config.localAddr}:${config.localPort}`);
 
   return {
-    server, udpRelay,
+    server,
+    udpRelay,
     pacServer,
     closeAll,
   };
 }
 
+// eslint-disable-next-line
 export function startServer(config, willLogToConsole = false) {
   logger = logger || createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
 
-  return createServer(config);
+  const { info, warn, error } = createAuthInfo(config);
+
+  if (error) {
+    logger.error(`${NAME} error: ${error}`);
+    return null;
+  }
+
+  if (warn) {
+    logger.warn(`${NAME}: ${warn}`);
+  }
+
+  return createServer(Object.assign({}, config, {
+    authInfo: info,
+  }));
 }
 
 if (module === require.main) {
-  process.on('message', config => {
+  process.on('message', (config) => {
     logger = createLogger(config.level, LOG_NAMES.LOCAL, false);
     startServer(config, false);
   });
 
-  process.on('uncaughtException', err => {
+  process.on('uncaughtException', (err) => {
     logger.error(`${NAME} uncaughtException: ${err.stack} `, createSafeAfterHandler(logger, () => {
       process.exit(1);
     }));
