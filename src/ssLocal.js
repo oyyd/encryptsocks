@@ -80,6 +80,8 @@ export function usernamePasswordAuthetication(connection, data, authInfo) {
   // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
   // +----+------+----------+------+----------+
 
+  console.log('data', data)
+
   const usernamePassword = fetchUsernamePassword(data);
 
   if (!usernamePassword) {
@@ -233,6 +235,7 @@ function handleConnection(config, connection) {
   let timer = null;
 
   connection.on('data', (data) => {
+    console.log(data.toString('ascii'));
     switch (stage) {
       case 0:
         stage = handleMethod(connection, data, authInfo);

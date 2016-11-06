@@ -4,6 +4,8 @@
 
 ## 1.1.3
 
+* Core: Support SOCKS5 username/password authetication.
+
 ## 1.1.2
 
 * Core: Add domain resolving support.

@@ -9,7 +9,7 @@ Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](
 * [CLI](https://github.com/oyyd/shadowsocks-js#cli)
 * [Examples](https://github.com/oyyd/shadowsocks-js#examples)
 * [Config](https://github.com/oyyd/shadowsocks-js#config)
-* [Authetication](https://github.com/oyyd/shadowsocks-js#socks5-username-password-authetication)
+* [SOCKS5 Username Password Authetication](https://github.com/oyyd/shadowsocks-js#socks5-username-password-authetication)
 
 ## Why another Nodejs implementation?
 
@@ -143,7 +143,18 @@ package.
 
 __NOTE:__ This authetication is dangerous when sniffed.
 
-TODO:
+Add `auth` property to your `config.json` and make `forceAuth` `true`.
+
+```json
+{
+  "auth": {
+    "forceAuth": true,
+    "usernamePassword": {
+      "name": "password"
+    }
+  }
+}
+```
 
 ## [Optimizing Shadowsocks](https://github.com/Long-live-shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
 

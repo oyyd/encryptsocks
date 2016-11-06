@@ -13,7 +13,7 @@
   "auth": {
     "forceAuth": false,
     "usernamePassword": {
-      "oyyd": "12345678"
+      "name": "password"
     }
   }
 }
