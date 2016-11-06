@@ -30,7 +30,8 @@ describe('UDP Relay', () => {
   let ssLocalServer;
   let ssServerServer;
 
-  before(() => {
+  before(function() {
+    this.timeout(5000);
     ssLocalServer = ssLocal.startServer(config);
     ssServerServer = ssServer.startServer(config);
     dstServer = createUDPServer();

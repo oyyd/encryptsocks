@@ -80,7 +80,8 @@ describe('http proxy', () => {
   let ssLocalServer;
   let ssServerServer;
 
-  before(cb => {
+  before(function(cb) {
+    this.timeout(5000);
     ssLocalServer = ssLocal.startServer(config);
     ssServerServer = ssServer.startServer(config);
     dstServer = createHTTPServer(cb);
