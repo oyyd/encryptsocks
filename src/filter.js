@@ -16,7 +16,7 @@ export function filter(dstInfo) {
 
   let i;
 
-  for (i = 0; i < denyListLength; i++) {
+  for (i = 0; i < denyListLength; i += 1) {
     if (defaultDenyList[i].test(dstStr)) {
       return false;
     }

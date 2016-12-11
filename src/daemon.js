@@ -24,6 +24,7 @@ let child = null;
 let logger;
 let shouldStop = false;
 
+// eslint-disable-next-line
 export const FORK_FILE_PATH = {
   local: join(__dirname, 'ssLocal'),
   server: join(__dirname, 'ssServer'),
@@ -73,7 +74,8 @@ if (module === require.main) {
 
   getConfig(argv, (err, config) => {
     const { proxyOptions } = config;
-    const shouldRecordServerMemory = proxyOptions._recordMemoryUsage && type === 'server';
+    // eslint-disable-next-line
+    const shouldRecordServerMemory = proxyOptions['_recordMemoryUsage'] && type === 'server';
 
     logger = createLogger(proxyOptions.level, LOG_NAMES.DAEMON, false);
 
@@ -99,7 +101,7 @@ if (module === require.main) {
       process.exit(0);
     });
 
-    process.on('uncaughtException', uncaughtErr => {
+    process.on('uncaughtException', (uncaughtErr) => {
       logger.error(`${NAME} get error:\n${uncaughtErr.stack}`,
         createSafeAfterHandler(logger, () => {
           process.exit(1);

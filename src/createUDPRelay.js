@@ -1,8 +1,8 @@
 import dgram from 'dgram';
-import { getDstInfoFromUDPMsg, sendDgram, closeSilently } from './utils';
 import LRU from 'lru-cache';
-import * as encryptor from './encryptor';
 import ip from 'ip';
+import { getDstInfoFromUDPMsg, sendDgram, closeSilently } from './utils';
+import * as encryptor from './encryptor';
 
 // SOCKS5 UDP Request
 // +----+------+------+----------+----------+----------+
@@ -62,7 +62,7 @@ function createClient(logger, { atyp, dstAddr, dstPort }, onMsg, onClose) {
 
   socket.on('message', onMsg);
 
-  socket.on('error', e => {
+  socket.on('error', (e) => {
     logger.warn(`${NAME} client socket gets error: ${e.message}`);
   });
 
@@ -71,7 +71,7 @@ function createClient(logger, { atyp, dstAddr, dstPort }, onMsg, onClose) {
   return socket;
 }
 
-function _createUDPRelay(udpType, config, isServer, logger) {
+function createUDPRelaySocket(udpType, config, isServer, logger) {
   const {
     localPort, serverPort,
     password, method,
@@ -105,9 +105,9 @@ function _createUDPRelay(udpType, config, isServer, logger) {
     let client = cache.get(index);
 
     if (!client) {
-      client = createClient(logger, dstInfo, _incomeMsg => {
+      client = createClient(logger, dstInfo, (msgStream) => {
         // socket on message
-        const incomeMsg = (isServer ? encrypt(_incomeMsg) : decrypt(_incomeMsg));
+        const incomeMsg = (isServer ? encrypt(msgStream) : decrypt(msgStream));
         sendDgram(socket, incomeMsg, rinfo.port, rinfo.address);
       }, () => {
         // socket on close
@@ -148,13 +148,15 @@ function _createUDPRelay(udpType, config, isServer, logger) {
 }
 
 function close(sockets) {
-  sockets.forEach(socket => {
+  sockets.forEach((socket) => {
     closeSilently(socket);
   });
 }
 
 export default function createUDPRelay(config, isServer, logger) {
-  const sockets = SOCKET_TYPE.map(udpType => _createUDPRelay(udpType, config, isServer, logger));
+  const sockets = SOCKET_TYPE.map(udpType =>
+    createUDPRelaySocket(udpType, config, isServer, logger));
+
   return {
     sockets,
     close: close.bind(null, sockets),

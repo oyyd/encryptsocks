@@ -4,6 +4,7 @@ import { writeFileSync, accessSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 const DEFAULT_PATH = join(__dirname, '../logs/debug.log');
+const hasOwnProperty = {}.hasOwnProperty;
 
 let platform = null;
 
@@ -64,6 +65,7 @@ export function createSafeAfterHandler(logger, next) {
 
   return () => {
     Object.keys(logger.transports).forEach((k) => {
+      // eslint-disable-next-line
       const stream = logger.transports[k]._stream;
       if (stream) {
         numFlushes += 1;
@@ -115,7 +117,7 @@ export function writeOrPause(fromCon, toCon, data) {
   return res;
 }
 
-function _getDstInfo(data, offset) {
+function parseDstInfo(data, offset) {
   const atyp = data[offset];
 
   let dstAddr;
@@ -169,7 +171,7 @@ export function getDstInfo(data, isServer) {
   // Yet shadowsocks begin with ATYP.
 
   const offset = isServer ? 0 : 3;
-  return _getDstInfo(data, offset);
+  return parseDstInfo(data, offset);
 }
 
 export function getDstInfoFromUDPMsg(data, isServer) {
@@ -181,7 +183,7 @@ export function getDstInfoFromUDPMsg(data, isServer) {
 
   const offset = isServer ? 0 : 3;
 
-  return _getDstInfo(data, offset);
+  return parseDstInfo(data, offset);
 }
 
 const formatKeyValues = {
@@ -197,7 +199,7 @@ export function formatConfig(_config) {
   const formattedConfig = Object.assign({}, _config);
 
   Object.keys(formatKeyValues).forEach((key) => {
-    if (formattedConfig.hasOwnProperty(key)) {
+    if (hasOwnProperty.call(formattedConfig, key)) {
       formattedConfig[formatKeyValues[key]] = formattedConfig[key];
       delete formattedConfig[key];
     }

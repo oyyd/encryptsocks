@@ -4,6 +4,7 @@ import { getPACFileContent } from './gfwlistUtils';
 const NAME = 'pac_server';
 
 // TODO: async this
+// eslint-disable-next-line
 export function createPACServer(config, logger) {
   const pacFileContent = getPACFileContent(config);
   const HOST = `${config.localAddr}:${config.pacServerPort}`;

@@ -44,7 +44,7 @@ describe('requestGFWList', function() {
 
   describe('readLine', function() {
     it('should read line correctly', function() {
-      readLine._clear();
+      readLine.clear();
       strictEqual(readLine(text), '1\n');
       strictEqual(readLine(text), '2\r');
       strictEqual(readLine(text), '3\r\n');
@@ -53,7 +53,7 @@ describe('requestGFWList', function() {
     });
 
     it('should read from start when reading a new string', function() {
-      readLine._clear();
+      readLine.clear();
       strictEqual(readLine(text), '1\n');
       strictEqual(readLine(text), '2\r');
       strictEqual(readLine(text2), '1\n');
@@ -61,7 +61,7 @@ describe('requestGFWList', function() {
     });
 
     it('should strip linebreak', function() {
-      readLine._clear();
+      readLine.clear();
       strictEqual(readLine(text, true), '1');
       strictEqual(readLine(text, true), '2');
       strictEqual(readLine(text, true), '3');

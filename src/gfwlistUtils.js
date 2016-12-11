@@ -17,12 +17,12 @@ const MINIFY_OPTIONS = {
   fromString: true,
 };
 
-let _readLineLastContent = null;
-let _readLineLastIndex = 0;
+let readLineLastContent = null;
+let readLineLastIndex = 0;
 
-function _clear() {
-  _readLineLastContent = null;
-  _readLineLastIndex = 0;
+function clear() {
+  readLineLastContent = null;
+  readLineLastIndex = 0;
 }
 
 export function readLine(text, shouldStrip) {
@@ -30,10 +30,10 @@ export function readLine(text, shouldStrip) {
   let i = null;
   let delimer = null;
 
-  if (text === _readLineLastContent) {
-    startIndex = _readLineLastIndex;
+  if (text === readLineLastContent) {
+    startIndex = readLineLastIndex;
   } else {
-    _readLineLastContent = text;
+    readLineLastContent = text;
   }
 
   LINE_DELIMER.forEach((char) => {
@@ -46,15 +46,15 @@ export function readLine(text, shouldStrip) {
   });
 
   if (i !== null) {
-    _readLineLastIndex = i + delimer.length;
-    return shouldStrip ? text.slice(startIndex, i) : text.slice(startIndex, _readLineLastIndex);
+    readLineLastIndex = i + delimer.length;
+    return shouldStrip ? text.slice(startIndex, i) : text.slice(startIndex, readLineLastIndex);
   }
 
-  _readLineLastIndex = 0;
+  readLineLastIndex = 0;
   return null;
 }
 
-readLine._clear = _clear;
+readLine.clear = clear;
 
 function shouldDropLine(line) {
   // NOTE: It's possible that gfwlist has rules that is a too long

@@ -1,9 +1,9 @@
+import ip from 'ip';
 import { createServer as _createServer, connect } from 'net';
 import { getDstInfo, writeOrPause, createSafeAfterHandler } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
-import ip from 'ip';
 import { INTERVAL_TIME } from './recordMemoryUsage';
 
 const NAME = 'ss_server';
@@ -39,7 +39,7 @@ function createClientToDst(
 
   const clientToDst = connect(clientOptions, onConnect);
 
-  clientToDst.on('data', clientData => {
+  clientToDst.on('data', (clientData) => {
     if (!cipher) {
       tmp = createCipher(password, method, clientData);
       cipher = tmp.cipher;
@@ -65,12 +65,12 @@ function createClientToDst(
     }
   });
 
-  clientToDst.on('error', e => {
+  clientToDst.on('error', (e) => {
     logger.warn(`ssServer error happened when write to DST: ${e.message}`);
     onDestroy();
   });
 
-  clientToDst.on('close', e => {
+  clientToDst.on('close', (e) => {
     if (isLocalConnected()) {
       if (e) {
         connection.destroy();
@@ -95,7 +95,7 @@ function handleConnection(config, connection) {
   let dstConnected = false;
   let timer = null;
 
-  connection.on('data', chunck => {
+  connection.on('data', (chunck) => {
     try {
       if (!decipher) {
         tmp = createDecipher(config.password, config.method, chunck);
@@ -168,11 +168,11 @@ function handleConnection(config, connection) {
     }
   });
 
-  connection.on('error', e => {
+  connection.on('error', (e) => {
     logger.warn(`ssServer error happened in the connection with ssLocal : ${e.message}`);
   });
 
-  connection.on('close', e => {
+  connection.on('close', (e) => {
     if (timer) {
       clearTimeout(timer);
     }
@@ -207,7 +207,7 @@ function createServer(config) {
     logger.warn(`${NAME} server closed`);
   });
 
-  server.on('error', e => {
+  server.on('error', (e) => {
     logger.error(`${NAME} server error: ${e.message}`);
   });
 
@@ -218,6 +218,7 @@ function createServer(config) {
   };
 }
 
+// eslint-disable-next-line
 export function startServer(config, willLogToConsole = false) {
   logger = logger || createLogger(config.level, LOG_NAMES.SERVER, willLogToConsole);
 
@@ -225,12 +226,13 @@ export function startServer(config, willLogToConsole = false) {
 }
 
 if (module === require.main) {
-  process.on('message', config => {
+  process.on('message', (config) => {
     logger = createLogger(config.level, LOG_NAMES.SERVER, false);
 
     startServer(config, false);
 
     // NOTE: DEV only
+    // eslint-disable-next-line
     if (config._recordMemoryUsage) {
       setInterval(() => {
         process.send(process.memoryUsage());
@@ -238,7 +240,7 @@ if (module === require.main) {
     }
   });
 
-  process.on('uncaughtException', err => {
+  process.on('uncaughtException', (err) => {
     logger.error(`${NAME} uncaughtException: ${err.stack}`, createSafeAfterHandler(logger, () => {
       process.exit(1);
     }));

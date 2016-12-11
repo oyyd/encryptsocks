@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 
+const hasOwnProperty = {}.hasOwnProperty;
+
 // directly exported from shadowsocks-nodejs
 const cryptoParamLength = {
   'aes-128-cfb': [16, 16],
@@ -38,7 +40,7 @@ export function generateKey(methodName, secret) {
   let hash;
   let length = 0;
 
-  if (keyCache.hasOwnProperty(cacheIndex)) {
+  if (hasOwnProperty.call(keyCache, cacheIndex)) {
     return keyCache[cacheIndex];
   }
 
@@ -50,7 +52,7 @@ export function generateKey(methodName, secret) {
   while (length < keyLength) {
     hash = getMD5Hash((i === 0) ? secretBuf : Buffer.concat([tokens[i - 1], secretBuf]));
     tokens.push(hash);
-    i ++;
+    i += 1;
     length += hash.length;
   }
 
