@@ -36,7 +36,7 @@ export function readLine(text, shouldStrip) {
     _readLineLastContent = text;
   }
 
-  LINE_DELIMER.forEach(char => {
+  LINE_DELIMER.forEach((char) => {
     const index = text.indexOf(char, startIndex);
 
     if (index !== -1 && (i === null || index < i)) {
@@ -97,12 +97,12 @@ export function createPACFileContent(text, { localAddr, localPort }) {
 
 export function requestGFWList(targetURL, next) {
   const options = parse(targetURL);
-  const requestMethod = (~options.protocol.indexOf('https') ? request : httpRequest);
+  const requestMethod = (options.protocol.indexOf('https') >= 0 ? request : httpRequest);
 
-  const req = requestMethod(options, res => {
+  const req = requestMethod(options, (res) => {
     let data = null;
 
-    res.on('data', chunk => {
+    res.on('data', (chunk) => {
       data = data ? Buffer.concat([data, chunk]) : chunk;
     });
 
@@ -113,7 +113,7 @@ export function requestGFWList(targetURL, next) {
     });
   });
 
-  req.on('error', err => {
+  req.on('error', (err) => {
     next(err);
   });
 

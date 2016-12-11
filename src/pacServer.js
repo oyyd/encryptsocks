@@ -13,7 +13,7 @@ export function createPACServer(config, logger) {
     res.end();
   });
 
-  server.on('error', err => {
+  server.on('error', (err) => {
     logger.error(`${NAME} got error: ${err.stack}`);
   });
 

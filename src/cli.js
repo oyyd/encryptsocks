@@ -79,17 +79,17 @@ function getArgvOptions(argv) {
 
   let invalidOption = null;
 
-  Object.keys(configPair).forEach(key => {
+  Object.keys(configPair).forEach((key) => {
     if (key === '_') {
       return;
     }
 
     let hit = false;
 
-    optionsType.forEach(optType => {
+    optionsType.forEach((optType) => {
       const i = optType.keys.indexOf(key);
 
-      if (~i) {
+      if (i >= 0) {
         optType.options[optType.values[optType.keys[i]]] = configPair[key]; // eslint-disable-line
         hit = true;
       }
@@ -103,7 +103,7 @@ function getArgvOptions(argv) {
   if (invalidOption) {
     invalidOption = (invalidOption.length === 1) ? `-${invalidOption}` : `--${invalidOption}`;
   } else if (generalOptions.daemon
-    && !!!~Object.keys(DAEMON_COMMAND).indexOf(generalOptions.daemon)) {
+    && Object.keys(DAEMON_COMMAND).indexOf(generalOptions.daemon) < 0) {
     invalidOption = `invalid daemon command: ${generalOptions.daemon}`;
   }
 
@@ -151,7 +151,8 @@ export function getConfig(argv = [], next) {
   const { generalOptions, proxyOptions, invalidOption } = getArgvOptions(argv);
   const specificFileConfig = readConfig(proxyOptions.configFilePath) || fileConfig;
   const config = {
-    generalOptions, invalidOption,
+    generalOptions,
+    invalidOption,
     proxyOptions: Object.assign({}, DEFAULT_CONFIG, specificFileConfig, proxyOptions),
   };
 
@@ -189,7 +190,7 @@ General options:
 function updateGFWList(flag) {
   log('Updating gfwlist...');
 
-  const next = err => {
+  const next = (err) => {
     if (err) {
       throw err;
     } else {
