@@ -167,7 +167,7 @@ You can supply configurations via either config file or command line arguments.
 
 Proxy options:
   -c config                     path to config file
-  -s SERVER_ADDR                server address, default: 127.0.0.1
+  -s SERVER_ADDR                server address, default: 0.0.0.0
   -p SERVER_PORT                server port, default: 8083
   -l LOCAL_ADDR                 local binding address, default: 127.0.0.1
   -b LOCAL_PORT                 local port, default: 1080
