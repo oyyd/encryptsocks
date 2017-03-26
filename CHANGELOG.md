@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## master
+## 1.2.0
+
+* Bug fix: Respect the "serverAddr" option and set default "serverAddr" to "0.0.0.0".
+
+## 1.1.4
+
+* Core: Support http-proxy.
 
 ## 1.1.3
 

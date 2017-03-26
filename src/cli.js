@@ -254,9 +254,8 @@ function runDaemon(isServer, cmd) {
     case DAEMON_COMMAND.restart:
       stopDaemon(isServer, pid);
       startDaemon(isServer);
-      return;
+      break;
     default:
-      return;
   }
 }
 

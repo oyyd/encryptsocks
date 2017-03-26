@@ -152,7 +152,6 @@ function handleConnection(config, connection) {
         writeOrPause(connection, clientToDst, data);
         break;
       default:
-        return;
     }
   });
 
@@ -200,7 +199,9 @@ function handleConnection(config, connection) {
 }
 
 function createServer(config) {
-  const server = _createServer(handleConnection.bind(null, config)).listen(config.serverPort);
+  const { serverAddr } = config;
+  const server = _createServer(handleConnection.bind(null, config))
+    .listen(config.serverPort, serverAddr);
   const udpRelay = createUDPRelay(config, true, logger);
 
   server.on('close', () => {

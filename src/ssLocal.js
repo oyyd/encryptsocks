@@ -291,7 +291,6 @@ function handleConnection(config, connection) {
         stage = usernamePasswordAuthetication(connection, data, authInfo);
         break;
       default:
-        return;
     }
   });
 

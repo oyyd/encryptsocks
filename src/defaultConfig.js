@@ -1,6 +1,6 @@
 // proxy options
 const DEFAULT_CONFIG = {
-  serverAddr: '127.0.0.1',
+  serverAddr: '0.0.0.0',
   serverPort: 8083,
   localAddr: '127.0.0.1',
   localPort: 1080,
