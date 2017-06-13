@@ -161,6 +161,7 @@ export function getConfig(argv = [], next) {
 
 function logHelp(invalidOption) {
   log(
+// eslint-disable-next-line
 `
 ${(invalidOption ? `${invalidOption}\n` : '')}shadowsocks-js ${version}
 You can supply configurations via either config file or command line arguments.
@@ -206,7 +207,7 @@ function updateGFWList(flag) {
 }
 
 function startDaemon(isServer) {
-    // TODO: `node` or with path?
+  // TODO: `node` or with path?
   const child = spawn('node', [path.join(__dirname, 'daemon'), getDaemonType(isServer)]
     .concat(process.argv.slice(2)), SPAWN_OPTIONS);
 

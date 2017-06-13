@@ -56,7 +56,7 @@ function getIndex({ address, port }, { dstAddrStr, dstPortNum }) {
   return `${address}:${port}_${dstAddrStr}:${dstPortNum}`;
 }
 
-function createClient(logger, { atyp, dstAddr, dstPort }, onMsg, onClose) {
+function createClient(logger, { atyp /* , dstAddr, dstPort */ }, onMsg, onClose) {
   const udpType = (atyp === 1 ? 'udp4' : 'udp6');
   const socket = dgram.createSocket(udpType);
 

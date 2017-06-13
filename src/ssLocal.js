@@ -341,7 +341,9 @@ function handleConnection(config, connection) {
 function closeAll() {
   closeSilently(this.server);
   closeSilently(this.pacServer);
+
   this.udpRelay.close();
+
   if (this.httpProxyServer) {
     this.httpProxyServer.close();
   }
