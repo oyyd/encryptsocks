@@ -4,7 +4,7 @@ import { mkdirIfNotExistSync } from './utils';
 
 const TMP_PATH = join(__dirname, '../tmp');
 
-function getFileName(type) {
+export function getFileName(type) {
   switch (type) {
     case 'local':
       return join(TMP_PATH, 'local.pid');

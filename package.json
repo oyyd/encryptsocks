@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "rm -rf lib && babel src --out-dir lib && eslint src",
-    "watch": "babel src --watch --out-dir lib",
+    "dev": "babel src --watch --out-dir lib",
     "lint": "eslint src",
     "test": "mocha",
     "test-coverage": "istanbul cover _mocha",
@@ -45,6 +45,7 @@
     "ip": "^1.1.3",
     "lru-cache": "^4.0.1",
     "minimist": "^1.2.0",
+    "pm2": "^2.5.0",
     "uglify-js": "^2.6.2",
     "winston": "^2.2.0"
   }
