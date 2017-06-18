@@ -15,14 +15,19 @@ const DEFAULT_COMMON_OPTIONS = {
   timestamp: true,
 };
 
-function createLogData(level, filename, willLogToConsole) {
-  const transports = [
-    new winston.transports.File(Object.assign(
-      DEFAULT_COMMON_OPTIONS, {
-        level, filename,
-      })
-    ),
-  ];
+// TODO: to be refactored
+function createLogData(level, filename, willLogToConsole, notLogToFile) {
+  const transports = [];
+
+  if (!notLogToFile) {
+    transports.push(
+      new winston.transports.File(Object.assign(
+        DEFAULT_COMMON_OPTIONS, {
+          level, filename,
+        })
+      )
+    );
+  }
 
   if (willLogToConsole) {
     transports.push(
@@ -37,8 +42,15 @@ function createLogData(level, filename, willLogToConsole) {
   };
 }
 
-export function createLogger(level = DEFAULT_LEVEL, logName, willLogToConsole = false) {
+export function createLogger(
+  level = DEFAULT_LEVEL,
+  logName,
+  willLogToConsole = false,
+  notLogToFile = false,
+) {
   mkdirIfNotExistSync(PATH_PREFIX);
   const fileName = join(PATH_PREFIX, logName);
-  return new winston.Logger(createLogData(level, fileName, willLogToConsole));
+  return new winston.Logger(createLogData(
+    level, fileName, willLogToConsole, notLogToFile,
+  ));
 }

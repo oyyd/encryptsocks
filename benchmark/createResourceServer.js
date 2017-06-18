@@ -8,6 +8,7 @@ function createServer(next) {
   let total = 0;
 
   const logInterval = setInterval(() => {
+    // eslint-disable-next-line
     console.log(`receive total: ${total}`);
   }, 1000);
 

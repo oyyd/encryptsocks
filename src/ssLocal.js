@@ -7,6 +7,7 @@ import { createCipher, createDecipher } from './encryptor';
 import { createPACServer } from './pacServer';
 import createUDPRelay from './createUDPRelay';
 import { createAuthInfo, validate } from './auth';
+import { getConfig } from './config';
 
 const NAME = 'ss_local';
 
@@ -395,9 +396,20 @@ export function startServer(config, willLogToConsole = false) {
 }
 
 if (module === require.main) {
-  process.on('message', (config) => {
-    logger = createLogger(config.level, LOG_NAMES.LOCAL, false);
-    startServer(config, false);
+  getConfig(process.argv.slice(2), (err, config) => {
+    if (err) {
+      throw err;
+    }
+
+    const { proxyOptions } = config;
+
+    logger = createLogger(
+      proxyOptions.level,
+      LOG_NAMES.LOCAL,
+      true,
+      true,
+    );
+    startServer(proxyOptions, false);
   });
 
   process.on('uncaughtException', (err) => {

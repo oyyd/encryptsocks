@@ -223,3 +223,31 @@ export function getDstStr(dstInfo) {
       return 'WARN: invalid atyp';
   }
 }
+
+export function obj2Argv(obj) {
+  if (typeof obj !== 'object') {
+    throw new Error('expect an object when stringify to argv');
+  }
+
+  let argv = '';
+
+  Object.keys(obj).forEach((name) => {
+    const argName = name.length === 1 ? `-${name}` : `--${name}`;
+    const value = obj[name];
+    let argValue = '';
+
+    if (typeof value === 'boolean') {
+      if (!value) {
+        return;
+      }
+    } else {
+      argValue = String(value);
+    }
+
+    const parts = argValue.length > 0 ? `${argName} ${argValue}` : `${argName}`;
+
+    argv = `${argv} ${parts}`;
+  });
+
+  return argv;
+}

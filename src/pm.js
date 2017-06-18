@@ -5,12 +5,17 @@
  */
 import pm2 from 'pm2';
 import path from 'path';
-import { getConfig } from './cli';
+import { getConfig } from './config';
 import { getFileName } from './pid';
 
 export const FORK_FILE_PATH = {
   local: path.join(__dirname, 'ssLocal.js'),
   server: path.join(__dirname, 'ssServer.js'),
+};
+
+const pm2ProcessName = {
+  local: 'ssLocal',
+  server: 'ssServer',
 };
 
 function getDaemonInfo() {
@@ -68,68 +73,83 @@ function sendDataToPMId(id, data) {
   }));
 }
 
-class Daemon {
-  constructor({ type, config }) {
-    this.type = type;
-    this.config = config;
-  }
+function getPM2Config() {
+  return connect().then(getDaemonInfo).then((info) => {
+    const { type } = info;
 
-  start() {
-    let type = null;
-    let config = null;
+    const filePath = FORK_FILE_PATH[type];
+    const pidFileName = getFileName(type);
+    const name = pm2ProcessName[type];
 
-    return connect().then(getDaemonInfo).then((info) => {
-      config = info.config;
-      type = info.type;
+    const pm2Config = {
+      name,
+      script: filePath,
+      exec_mode: 'fork',
+      instances: 1,
+      pid_file: pidFileName,
+      args: process.argv.slice(3).join(' '),
+    };
 
-      const filePath = FORK_FILE_PATH[type];
-      const pidFileName = getFileName(type);
-
-      const pm2Config = {
-        script: filePath,
-        exec_mode: 'fork',
-        instances: 1,
-        pid_file: pidFileName,
-      };
-
-      return new Promise((resolve) => {
-        pm2.start(pm2Config, (err, apps) => {
-          if (err) {
-            throw err;
-          }
-
-          resolve(apps);
-        });
-      });
-    }).then((apps) => {
-      if (!Array.isArray(apps) || apps.length < 1) {
-        throw new Error('failed to exec scripts');
-      }
-
-      const app = apps[0];
-      const { pm_id } = app.pm2_env;
-      const { proxyOptions } = config;
-
-      return sendDataToPMId(pm_id, proxyOptions);
-    })
-      .then(() => disconnect())
-      .catch(handleError);
-  }
-
-  stop() {
-
-  }
-
-  restart() {
-
-  }
+    return {
+      info,
+      pm2Config,
+    };
+  });
 }
 
-// eslint-disable-next-line
-export function getDaemon(type, config) {
-  return new Daemon({ type, config });
+function start() {
+  let config = null;
+
+  return getPM2Config().then(({ pm2Config, info }) => {
+    config = info.config;
+
+    return new Promise((resolve) => {
+      pm2.start(pm2Config, (err, apps) => {
+        if (err) {
+          throw err;
+        }
+
+        resolve(apps);
+      });
+    });
+  }).then((apps) => {
+    if (!Array.isArray(apps) || apps.length < 1) {
+      throw new Error('failed to exec scripts');
+    }
+
+    const app = apps[0];
+    const { pm_id } = app.pm2_env;
+    const { proxyOptions } = config;
+
+    return sendDataToPMId(pm_id, proxyOptions);
+  })
+    .then(() => disconnect())
+    .catch(handleError);
+}
+
+export function stop() {
+  return getPM2Config().then(({ info }) => {
+    const { type } = info;
+    const name = pm2ProcessName[type];
+
+    return new Promise((resolve) => {
+      pm2.stop(name, (err) => {
+        if (err) {
+          throw err;
+        }
+
+        resolve();
+      });
+    });
+  })
+    .then(() => disconnect())
+    .catch(handleError);
+}
+
+export function get() {
+
 }
 
 if (require.main === module) {
-  getDaemon().start();
+  start();
 }
