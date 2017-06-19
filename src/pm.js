@@ -2,6 +2,7 @@
  * Daemon ss processes.
  * 1. start, stop, restart
  * 2. know the previous process running status
+ * 3. log and logrotate
  */
 import pm2 from 'pm2';
 import path from 'path';
@@ -18,9 +19,13 @@ const pm2ProcessName = {
   server: 'ssServer',
 };
 
-function getDaemonInfo() {
-  const type = process.argv[2];
-  const argv = process.argv.slice(3);
+function getArgs() {
+  return process.argv.slice(2);
+}
+
+function getDaemonInfo(type) {
+  // TODO: refactor this
+  const argv = getArgs();
 
   return new Promise((resolve) => {
     getConfig(argv, (err, config) => {
@@ -61,20 +66,15 @@ function connect() {
 }
 
 function handleError(err) {
-  // TODO:
-  // eslint-disable-next-line
-  console.error(err);
+  return disconnect().then(() => {
+    // TODO:
+    // eslint-disable-next-line
+    console.error(err);
+  });
 }
 
-function sendDataToPMId(id, data) {
-  return connect().then(() => pm2.sendDataToProcessId(id, {
-    type: 'process:msg',
-    data,
-  }));
-}
-
-function getPM2Config() {
-  return connect().then(getDaemonInfo).then((info) => {
+function getPM2Config(_type) {
+  return connect().then(getDaemonInfo.bind(null, _type)).then((info) => {
     const { type } = info;
 
     const filePath = FORK_FILE_PATH[type];
@@ -86,8 +86,12 @@ function getPM2Config() {
       script: filePath,
       exec_mode: 'fork',
       instances: 1,
-      pid_file: pidFileName,
-      args: process.argv.slice(3).join(' '),
+      output: path.resolve(__dirname, `../logs/${name}.log`),
+      error: path.resolve(__dirname, `../logs/${name}.err`),
+      pid: pidFileName,
+      minUptime: 2000,
+      maxRestarts: 3,
+      args: getArgs().join(' '),
     };
 
     return {
@@ -97,44 +101,57 @@ function getPM2Config() {
   });
 }
 
-function start() {
-  let config = null;
+function _start(type) {
+  return getPM2Config(type).then(({ pm2Config }) => new Promise((resolve) => {
+    pm2.start(pm2Config, (err, apps) => {
+      if (err) {
+        throw err;
+      }
 
-  return getPM2Config().then(({ pm2Config, info }) => {
-    config = info.config;
-
-    return new Promise((resolve) => {
-      pm2.start(pm2Config, (err, apps) => {
-        if (err) {
-          throw err;
-        }
-
-        resolve(apps);
-      });
+      resolve(apps);
     });
-  }).then((apps) => {
-    if (!Array.isArray(apps) || apps.length < 1) {
-      throw new Error('failed to exec scripts');
-    }
-
-    const app = apps[0];
-    const { pm_id } = app.pm2_env;
-    const { proxyOptions } = config;
-
-    return sendDataToPMId(pm_id, proxyOptions);
-  })
-    .then(() => disconnect())
-    .catch(handleError);
+  }))
+    .then(() => disconnect());
 }
 
-export function stop() {
-  return getPM2Config().then(({ info }) => {
-    const { type } = info;
-    const name = pm2ProcessName[type];
+export function start(type) {
+  return _start(type).catch(handleError);
+}
+
+function getRunningInfo(name) {
+  return new Promise((resolve) => {
+    pm2.describe(name, (err, descriptions) => {
+      if (err) {
+        throw err;
+      }
+
+      // TODO: there should not be more than one process
+      //  “online”, “stopping”,
+      //  “stopped”, “launching”,
+      //  “errored”, or “one-launch-status”
+      const status = descriptions.length > 0
+        && descriptions[0].pm2_env.status !== 'stopped'
+        && descriptions[0].pm2_env.status !== 'errored';
+
+      resolve(status);
+    });
+  });
+}
+
+function _stop(type) {
+  let config = null;
+
+  return getPM2Config(type).then((conf) => {
+    config = conf;
+    const { name } = config.pm2Config;
+    return getRunningInfo(name);
+  }).then(() => {
+    const { pm2Config } = config;
+    const { name } = pm2Config;
 
     return new Promise((resolve) => {
       pm2.stop(name, (err) => {
-        if (err) {
+        if (err && err.message !== 'process name not found') {
           throw err;
         }
 
@@ -142,14 +159,18 @@ export function stop() {
       });
     });
   })
-    .then(() => disconnect())
-    .catch(handleError);
+    .then(() => disconnect());
 }
 
-export function get() {
+export function stop(type) {
+  return _stop(type).catch(handleError);
+}
 
+export function restart(type) {
+  return _stop(type).then(() => _start(type)).catch(handleError);
 }
 
 if (require.main === module) {
-  start();
+  // stop('local');
+  restart('local');
 }

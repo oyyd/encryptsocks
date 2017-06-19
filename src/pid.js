@@ -2,7 +2,7 @@ import { unlinkSync, writeFileSync, accessSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { mkdirIfNotExistSync } from './utils';
 
-const TMP_PATH = join(__dirname, '../tmp');
+export const TMP_PATH = join(__dirname, '../tmp');
 
 export function getFileName(type) {
   switch (type) {

@@ -15,6 +15,7 @@ const TARGET_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfw
 const LINE_DELIMER = ['\r\n', '\r', '\n'];
 const MINIFY_OPTIONS = {
   fromString: true,
+  warnings: false,
 };
 
 let readLineLastContent = null;
