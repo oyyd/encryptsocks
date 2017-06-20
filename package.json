@@ -1,6 +1,6 @@
 {
   "name": "shadowsocks-js",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Yet another shadowsocks implementation for nodejs to help you bypass firewalls.",
   "keywords": [
     "shadowsocks",
@@ -31,7 +31,7 @@
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-es2015-loose": "^7.0.0",
-    "eslint": "^4.0.0",
+    "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.2.0",
     "eslint-plugin-import": "^2.3.0",
     "istanbul": "^0.4.3",

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.4.0
+
+* Core: Store list in base64.
+* Core: Manage process with `pm2`.
+
 ## 1.2.0
 
 * Bug fix: Respect the "serverAddr" option and set default "serverAddr" to "0.0.0.0".

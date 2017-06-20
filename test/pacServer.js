@@ -27,7 +27,7 @@ xdescribe(LOCAL_ONLY + ' requestGFWList', function() {
   });
 
   it('should get gfwlist with specify url', function(cb) {
-    const targetURL = 'http://firefoxfan.cc/gfwlist/gfwlist.txt';
+    const targetURL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
 
     updateGFWList(targetURL, err => {
       if (err) {

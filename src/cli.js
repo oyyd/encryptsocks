@@ -1,32 +1,14 @@
-import path from 'path';
-import { spawn } from 'child_process';
 import { version } from '../package.json';
 import * as ssLocal from './ssLocal';
 import * as ssServer from './ssServer';
-import { getPid, writePidFile, deletePidFile } from './pid';
 import { updateGFWList as _updateGFWList, GFWLIST_FILE_PATH } from './gfwlistUtils';
-import { safelyKill } from './utils';
 import { getConfig, DAEMON_COMMAND } from './config';
-
-const SPAWN_OPTIONS = {
-  detached: true,
-  stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
-};
+import { start, stop, restart } from './pm';
 
 const log = console.log; // eslint-disable-line
 
 function getDaemonType(isServer) {
   return isServer ? 'server' : 'local';
-}
-
-function isRunning(pid) {
-  try {
-    // signal 0 to test existence
-    return process.kill(pid, 0);
-  } catch (e) {
-    // NOTE: 'EPERM' permissions, 'ESRCH' process group doesn't exist
-    return e.code !== 'ESRCH';
-  }
 }
 
 function logHelp(invalidOption) {
@@ -76,56 +58,22 @@ function updateGFWList(flag) {
   }
 }
 
-function startDaemon(isServer) {
-  // TODO: `node` or with path?
-  const child = spawn('node', [path.join(__dirname, './pm'), getDaemonType(isServer)]
-    .concat(process.argv.slice(2)), SPAWN_OPTIONS);
-
-  child.disconnect();
-  // do not wait for child
-  child.unref();
-
-  writePidFile(getDaemonType(isServer), child.pid);
-  log('start');
-
-  return child;
-}
-
-function stopDaemon(isServer, pid) {
-  if (pid) {
-    deletePidFile(getDaemonType(isServer));
-    safelyKill(pid, 'SIGHUP');
-    log('stop');
-  } else {
-    log('already stopped');
-  }
-}
-
 function runDaemon(isServer, cmd) {
-  let pid = getPid(getDaemonType(isServer));
-  const running = isRunning(pid);
-
-  if (pid && !running) {
-    log('previous daemon unexpectedly exited');
-    deletePidFile(getDaemonType(isServer));
-    pid = null;
-  }
+  const type = getDaemonType(isServer);
 
   switch (cmd) {
-    case DAEMON_COMMAND.start:
-      if (pid) {
-        log('already started');
-      } else {
-        startDaemon(isServer);
-      }
+    case DAEMON_COMMAND.start: {
+      start(type);
       return;
-    case DAEMON_COMMAND.stop:
-      stopDaemon(isServer, pid);
+    }
+    case DAEMON_COMMAND.stop: {
+      stop(type);
       return;
-    case DAEMON_COMMAND.restart:
-      stopDaemon(isServer, pid);
-      startDaemon(isServer);
+    }
+    case DAEMON_COMMAND.restart: {
+      restart(type);
       break;
+    }
     default:
   }
 }

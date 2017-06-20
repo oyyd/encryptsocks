@@ -14,7 +14,6 @@ const DEFAULT_CONFIG = {
 const TARGET_URL = 'https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt';
 const LINE_DELIMER = ['\r\n', '\r', '\n'];
 const MINIFY_OPTIONS = {
-  fromString: true,
   warnings: false,
 };
 
@@ -25,6 +24,14 @@ function clear() {
   readLineLastContent = null;
   readLineLastIndex = 0;
 }
+
+function base64ToString(base64String) {
+  return Buffer.from(base64String, 'base64').toString();
+}
+
+// function stringToBase64(string) {
+// return (new Buffer(base64String, 'base64')).toString('base64');
+// }
 
 export function readLine(text, shouldStrip) {
   let startIndex = 0;
@@ -109,7 +116,7 @@ export function requestGFWList(targetURL, next) {
 
     res.on('end', () => {
       // gfwlist.txt use utf8 encoded content to present base64 content
-      const listText = Buffer.from(data.toString(), 'base64');
+      const listText = data.toString();
       next(null, listText);
     });
   });
@@ -128,7 +135,7 @@ function minifyCode(code) {
 // TODO: async this
 export function getPACFileContent(_config) {
   const config = _config || DEFAULT_CONFIG;
-  const listText = readFileSync(GFWLIST_FILE_PATH, { encoding: 'utf8' });
+  const listText = base64ToString(readFileSync(GFWLIST_FILE_PATH, { encoding: 'utf8' }));
 
   return minifyCode(createPACFileContent(listText, config));
 }

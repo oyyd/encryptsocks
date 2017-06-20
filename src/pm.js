@@ -9,6 +9,9 @@ import path from 'path';
 import { getConfig } from './config';
 import { getFileName } from './pid';
 
+// eslint-disable-next-line
+const log = console.log
+
 export const FORK_FILE_PATH = {
   local: path.join(__dirname, 'ssLocal.js'),
   server: path.join(__dirname, 'ssServer.js'),
@@ -108,6 +111,7 @@ function _start(type) {
         throw err;
       }
 
+      log('start');
       resolve(apps);
     });
   }))
@@ -145,16 +149,23 @@ function _stop(type) {
     config = conf;
     const { name } = config.pm2Config;
     return getRunningInfo(name);
-  }).then(() => {
+  }).then((isRunning) => {
     const { pm2Config } = config;
     const { name } = pm2Config;
 
+    if (!isRunning) {
+      log('already stopped');
+      return;
+    }
+
+    // eslint-disable-next-line
     return new Promise((resolve) => {
       pm2.stop(name, (err) => {
         if (err && err.message !== 'process name not found') {
           throw err;
         }
 
+        log('stop');
         resolve();
       });
     });
@@ -168,9 +179,4 @@ export function stop(type) {
 
 export function restart(type) {
   return _stop(type).then(() => _start(type)).catch(handleError);
-}
-
-if (require.main === module) {
-  // stop('local');
-  restart('local');
 }
