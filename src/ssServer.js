@@ -4,7 +4,8 @@ import { getDstInfo, writeOrPause, createSafeAfterHandler } from './utils';
 import { createLogger, LOG_NAMES } from './logger';
 import { createCipher, createDecipher } from './encryptor';
 import createUDPRelay from './createUDPRelay';
-import { INTERVAL_TIME } from './recordMemoryUsage';
+// import { INTERVAL_TIME } from './recordMemoryUsage';
+import { getConfig } from './config';
 
 const NAME = 'ss_server';
 
@@ -227,18 +228,29 @@ export function startServer(config, willLogToConsole = false) {
 }
 
 if (module === require.main) {
-  process.on('message', (config) => {
-    logger = createLogger(config.level, LOG_NAMES.SERVER, false);
+  getConfig(process.argv.slice(2), (err, config) => {
+    if (err) {
+      throw err;
+    }
 
-    startServer(config, false);
+    const { proxyOptions } = config;
 
+    logger = createLogger(
+      proxyOptions.level,
+      LOG_NAMES.SERVER,
+      true,
+      true,
+    );
+    startServer(proxyOptions, false);
+
+    // TODO:
     // NOTE: DEV only
     // eslint-disable-next-line
-    if (config._recordMemoryUsage) {
-      setInterval(() => {
-        process.send(process.memoryUsage());
-      }, INTERVAL_TIME);
-    }
+    // if (config._recordMemoryUsage) {
+    //   setInterval(() => {
+    //     process.send(process.memoryUsage());
+    //   }, INTERVAL_TIME);
+    // }
   });
 
   process.on('uncaughtException', (err) => {
