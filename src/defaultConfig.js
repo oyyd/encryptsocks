@@ -1,3 +1,5 @@
+import path from 'path';
+
 // proxy options
 const DEFAULT_CONFIG = {
   serverAddr: '0.0.0.0',
@@ -9,6 +11,7 @@ const DEFAULT_CONFIG = {
   timeout: 600,
   method: 'aes-128-cfb',
   level: 'warn',
+  logPath: path.resolve(__dirname, '../logs'),
 
   // ipv6
   localAddrIPv6: '::1',

@@ -9,7 +9,7 @@
  */
 import { join } from 'path';
 import { fork } from 'child_process';
-import { createLogger, LOG_NAMES } from './logger';
+import { createLogger } from './logger';
 import { getConfig } from './cli';
 import { deletePidFile } from './pid';
 import { record, stopRecord } from './recordMemoryUsage';
@@ -77,7 +77,12 @@ if (module === require.main) {
     // eslint-disable-next-line
     const shouldRecordServerMemory = proxyOptions['_recordMemoryUsage'] && type === 'server';
 
-    logger = createLogger(proxyOptions.level, LOG_NAMES.DAEMON, false);
+    logger = createLogger(
+      proxyOptions.level,
+      null,
+      // LOG_NAMES.DAEMON,
+      false
+    );
 
     if (err) {
       logger.error(`${NAME}: ${err.message}`);

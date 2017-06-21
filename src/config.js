@@ -23,6 +23,7 @@ const PROXY_ARGUMENT_PAIR = {
   m: 'method',
   t: 'timeout',
   level: 'level',
+  log_path: 'logPath',
   // private
   mem: '_recordMemoryUsage',
 };
@@ -76,6 +77,11 @@ function getArgvOptions(argv) {
   } else if (generalOptions.daemon
     && Object.keys(DAEMON_COMMAND).indexOf(generalOptions.daemon) < 0) {
     invalidOption = `invalid daemon command: ${generalOptions.daemon}`;
+  }
+
+  if (proxyOptions.logPath && !path.isAbsolute(proxyOptions.logPath)) {
+    proxyOptions.logPath =
+      path.resolve(process.cwd(), proxyOptions.logPath);
   }
 
   return {

@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { join } from 'path';
+import { resolve } from 'path';
 import { mkdirIfNotExistSync } from './utils';
 
 export const LOG_NAMES = {
@@ -8,7 +8,6 @@ export const LOG_NAMES = {
   DAEMON: 'daemon.log',
 };
 
-const PATH_PREFIX = join(__dirname, '../logs');
 const DEFAULT_LEVEL = 'warn';
 const DEFAULT_COMMON_OPTIONS = {
   colorize: true,
@@ -19,13 +18,14 @@ const DEFAULT_COMMON_OPTIONS = {
 function createLogData(level, filename, willLogToConsole, notLogToFile) {
   const transports = [];
 
-  if (!notLogToFile) {
+  if (filename && !notLogToFile) {
     transports.push(
       new winston.transports.File(Object.assign(
         DEFAULT_COMMON_OPTIONS, {
-          level, filename,
-        })
-      )
+          level,
+          filename,
+        }
+      ))
     );
   }
 
@@ -43,13 +43,18 @@ function createLogData(level, filename, willLogToConsole, notLogToFile) {
 }
 
 export function createLogger(
-  level = DEFAULT_LEVEL,
+  proxyOptions,
   logName,
   willLogToConsole = false,
   notLogToFile = false,
 ) {
-  mkdirIfNotExistSync(PATH_PREFIX);
-  const fileName = join(PATH_PREFIX, logName);
+  const { level = DEFAULT_LEVEL, logPath } = (proxyOptions || {});
+
+  if (logPath) {
+    mkdirIfNotExistSync(logPath);
+  }
+
+  const fileName = logPath ? resolve(logPath, logName) : null;
   return new winston.Logger(createLogData(
     level, fileName, willLogToConsole, notLogToFile,
   ));

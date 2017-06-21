@@ -2,6 +2,7 @@
 
 ## 1.4.0
 
+* Core: Allow to set log path.
 * Core: Store list in base64.
 * Core: Manage process with `pm2`.
 

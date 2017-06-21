@@ -12,6 +12,13 @@ import { getFileName } from './pid';
 // eslint-disable-next-line
 const log = console.log
 
+// const LOG_ROTATE_OPTIONS = {
+//   maxSize: '1KB',
+//   retain: 7,
+//   workerInterval: 60,
+//   rotateInterval: '*/1 * * * *',
+// };
+
 export const FORK_FILE_PATH = {
   local: path.join(__dirname, 'ssLocal.js'),
   server: path.join(__dirname, 'ssServer.js'),

@@ -377,7 +377,7 @@ function createServer(config) {
 
 // eslint-disable-next-line
 export function startServer(config, willLogToConsole = false) {
-  logger = logger || createLogger(config.level, LOG_NAMES.LOCAL, willLogToConsole);
+  logger = logger || createLogger(config, LOG_NAMES.LOCAL, willLogToConsole);
 
   const { info, warn, error } = createAuthInfo(config);
 
@@ -404,7 +404,7 @@ if (module === require.main) {
     const { proxyOptions } = config;
 
     logger = createLogger(
-      proxyOptions.level,
+      proxyOptions,
       LOG_NAMES.LOCAL,
       true,
       true,

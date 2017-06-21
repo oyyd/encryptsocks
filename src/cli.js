@@ -19,23 +19,24 @@ ${(invalidOption ? `${invalidOption}\n` : '')}shadowsocks-js ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:
-  -c CONFIG_FILE                path to config file
-  -s SERVER_ADDR                server address, default: 0.0.0.0
-  -p SERVER_PORT                server port, default: 8083
-  -l LOCAL_ADDR                 local binding address, default: 127.0.0.1
-  -b LOCAL_PORT                 local port, default: 1080
-  -k PASSWORD                   password
-  -m METHOD                     encryption method, default: aes-128-cfb
-  -t TIMEOUT                    timeout in seconds, default: 600
-  --pac_port PAC_PORT           PAC file server port, default: 8090
+  -c CONFIG_FILE                Path to the config file.
+  -s SERVER_ADDR                Server address. default: 0.0.0.0
+  -p SERVER_PORT                Server port. default: 8083
+  -l LOCAL_ADDR                 Local binding address. default: 127.0.0.1
+  -b LOCAL_PORT                 Local port. default: 1080
+  -k PASSWORD                   Password.
+  -m METHOD                     Encryption method. default: aes-128-cfb
+  -t TIMEOUT                    Timeout in seconds. default: 600
+  --pac_port PAC_PORT           PAC file server port. default: 8090
   --pac_update_gfwlist [URL]    [localssjs] Update the gfwlist
                                 for PAC server. You can specify the
                                 request URL.
-  --level LOG_LEVEL             log level, default: warn
+  --log_path LOG_PATH           The directory path to log. Won't if not set.
+  --level LOG_LEVEL             Log level. default: warn
                                 example: --level verbose
 General options:
-  -h, --help                    show this help message and exit
-  -d start/stop/restart         daemon mode
+  -h, --help                    Show this help message and exit.
+  -d start/stop/restart         Run as a daemon.
 `
   );
 }

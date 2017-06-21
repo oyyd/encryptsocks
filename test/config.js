@@ -54,5 +54,26 @@ describe('config', () => {
         done();
       })
     })
+
+    it('should get `logPath` when set', (done) => {
+      const argv = ['--log_path', '/logs']
+
+      getConfig(argv, true, (err, options) => {
+        assert(!err);
+        assert(options.proxyOptions.logPath === argv[1]);
+        done();
+      })
+    })
+
+    it('should use `process.pwd()` as base when set a relative path', done => {
+      const argv = ['--log_path', './logs']
+
+      getConfig(argv, true, (err, options) => {
+        assert(!err);
+        assert(options.proxyOptions.logPath
+          === (process.cwd() + '/logs'));
+        done();
+      })
+    })
   })
 });

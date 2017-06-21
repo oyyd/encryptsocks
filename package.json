@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "rm -rf lib && babel src --out-dir lib && eslint src",
-    "dev": "babel src --watch --out-dir lib",
+    "dev": "babel src --watch --out-dir lib --source-maps inline",
     "lint": "eslint src",
     "test": "mocha",
     "test-coverage": "istanbul cover _mocha",
@@ -23,7 +23,7 @@
     "travis-ci-test-coverage": "istanbul cover _mocha -- --fgrep '[local only]' --invert --require babel-polyfill",
     "benchmark": "node benchmark/run"
   },
-  "author": "oyyd (oyydoibh@gmail.com)",
+  "author": "oyyd <oyydoibh@gmail.com>",
   "license": "BSD",
   "devDependencies": {
     "babel-cli": "^6.6.5",
