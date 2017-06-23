@@ -1,6 +1,9 @@
 const assert = require('assert');
-const { resolveServerAddr, getConfig } = require('../lib/config');
+const c = require('../lib/config');
 const ip = require('ip');
+
+const resolveServerAddr = c.resolveServerAddr
+const getConfig = c.getConfig
 
 describe('config', () => {
   describe('resolveServerAddr', () => {
