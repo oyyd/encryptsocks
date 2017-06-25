@@ -224,6 +224,10 @@ export function getDstStr(dstInfo) {
   }
 }
 
+export function getPrefixedArgName(name) {
+  return name.length === 1 ? `-${name}` : `--${name}`;
+}
+
 export function obj2Argv(obj) {
   if (typeof obj !== 'object') {
     throw new Error('expect an object when stringify to argv');
@@ -232,7 +236,7 @@ export function obj2Argv(obj) {
   let argv = '';
 
   Object.keys(obj).forEach((name) => {
-    const argName = name.length === 1 ? `-${name}` : `--${name}`;
+    const argName = getPrefixedArgName(name);
     const value = obj[name];
     let argValue = '';
 

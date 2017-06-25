@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.1
+
+* Core: Support passing a `proxyOptions` in `pm` instead of creating a config object from `argv`.
+
 ## 1.4.0
 
 * Core: Allow to set log path.

@@ -5,6 +5,7 @@ import minimist from 'minimist';
 import { readFileSync, accessSync } from 'fs';
 import DEFAULT_CONFIG from './defaultConfig';
 import fileConfig from '../config.json';
+import { getPrefixedArgName } from './utils';
 
 export const DAEMON_COMMAND = {
   start: 'start',
@@ -28,12 +29,55 @@ const PROXY_ARGUMENT_PAIR = {
   mem: '_recordMemoryUsage',
 };
 
+const PROXY_ARGUMENT_EXTRAL_KEYS = [
+  'localAddrIPv6',
+  'serverAddrIPv6',
+  '_recordMemoryUsage',
+];
+
 const GENERAL_ARGUMENT_PAIR = {
   h: 'help',
   help: 'help',
   d: 'daemon',
   pac_update_gfwlist: 'pacUpdateGFWList',
 };
+
+function getProxyOptionArgName(optionName) {
+  // ignore these keys
+  if (PROXY_ARGUMENT_EXTRAL_KEYS.indexOf(optionName) >= 0) {
+    return null;
+  }
+
+  const result = Object.keys(PROXY_ARGUMENT_PAIR)
+    .find(item => PROXY_ARGUMENT_PAIR[item] === optionName);
+
+  if (!result) {
+    throw new Error(`invalid optionName: "${optionName}"`);
+  }
+
+  return result;
+}
+
+export function stringifyProxyOptions(proxyOptions) {
+  if (typeof proxyOptions !== 'object') {
+    throw new Error('invalid type of "proxyOptions"');
+  }
+
+  const args = [];
+
+  Object.keys(proxyOptions).forEach((optionName) => {
+    const value = proxyOptions[optionName];
+    const argName = getProxyOptionArgName(optionName);
+
+    if (!argName) {
+      return;
+    }
+
+    args.push(getPrefixedArgName(argName), value);
+  });
+
+  return args.join(' ');
+}
 
 function getArgvOptions(argv) {
   const generalOptions = {};
@@ -124,6 +168,10 @@ export function resolveServerAddr(config, next) {
       }
     });
   }
+}
+
+export function getDefaultProxyOptions() {
+  return Object.assign({}, DEFAULT_CONFIG);
 }
 
 export function getConfig(argv = [], arg1, arg2) {
