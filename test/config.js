@@ -86,7 +86,7 @@ describe('config', () => {
     it('should stringify proxyOptions', () => {
       const argString = stringifyProxyOptions(DEFAULT_CONFIG);
 
-      assert(argString === '-s 0.0.0.0 -p 8083 -l 127.0.0.1 -b 1080 -k YOUR_PASSWORD_HERE --pac_port 8090 -t 600 -m aes-128-cfb --level warn --log_path /Users/liangduan/code/github/shadowsocks-js/logs')
+      assert(argString.indexOf('-s 0.0.0.0 -p 8083 -l 127.0.0.1 -b 1080 -k YOUR_PASSWORD_HERE --pac_port 8090 -t 600 -m aes-128-cfb --level warn') === 0)
     })
   })
 });
