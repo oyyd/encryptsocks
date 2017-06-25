@@ -1,7 +1,11 @@
 const assert = require('assert');
-const { resolveServerAddr, getConfig, stringifyProxyOptions } = require('../lib/config');
+const c = require('../lib/config');
 const DEFAULT_CONFIG = require('../lib/defaultConfig').default;
 const ip = require('ip');
+
+const resolveServerAddr = c.resolveServerAddr
+const getConfig = c.getConfig
+const stringifyProxyOptions = c.stringifyProxyOptions
 
 describe('config', () => {
   describe('resolveServerAddr', () => {
