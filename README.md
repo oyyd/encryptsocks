@@ -1,25 +1,25 @@
-# shadowsocks-js
+# encryptsocks
 
 [![npm-version](https://img.shields.io/npm/v/shadowsocks-js.svg?style=flat-square)](https://www.npmjs.com/package/shadowsocks-js)
 [![travis-ci build](https://travis-ci.org/oyyd/shadowsocks-js.svg)](https://travis-ci.org/oyyd/shadowsocks-js)
 
-Yet another [shadowsocks](https://shadowsocks.org/) implementation for [nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) to help you bypass firewalls.
+Encrypt your socks transmission.
 
-* [Why another Nodejs implementation? (with Benchmark)](https://github.com/oyyd/shadowsocks-js#why-another-nodejs-implementation)
-* [CLI](https://github.com/oyyd/shadowsocks-js#cli)
-* [Examples](https://github.com/oyyd/shadowsocks-js#examples)
-* [Config](https://github.com/oyyd/shadowsocks-js#config)
-* [SOCKS5 Username Password Authetication](https://github.com/oyyd/shadowsocks-js#socks5-username-password-authetication)
+* [Why another Nodejs implementation? (with Benchmark)](https://github.com/oyyd/encryptsocks#why-another-nodejs-implementation)
+* [CLI](https://github.com/oyyd/encryptsocks#cli)
+* [Examples](https://github.com/oyyd/encryptsocks#examples)
+* [Config](https://github.com/oyyd/encryptsocks#config)
+* [SOCKS5 Username Password Authetication](https://github.com/oyyd/encryptsocks#socks5-username-password-authetication)
 
 ## Why another Nodejs implementation?
 
-Shadowsocks is a light weight and efficient proxy tunnel and __nodejs is a very good choice to achieve both flexibility and good performance in this situation__.
+__Nodejs is a very good choice to achieve both flexibility and good performance in this situation__.
 
-And I have found that many of who are familiar with [shadowsocks-nodejs](https://github.com/shadowsocks/shadowsocks-nodejs) may be curious about the memory usage so that I have finished some simple benchmarks to measure its behavior.
+And I have found that many of who are familiar with the [original implementation](https://github.com/shadowsocks/shadowsocks-nodejs) may be curious about the memory usage so that I have finished some simple benchmarks to measure its behavior.
 
 ### Benchmark
 
-You can get the benchmark details [here](benchmark/README.md) or even test your own shadowsocks implementation.
+You can get the benchmark details [here](benchmark/README.md) or even test your own  implementation.
 
 After some simple benchmarks that compare both the node and python implementation, my conclusion is:
 
@@ -39,14 +39,7 @@ node >= v4
 
 It's recommended to use node v6 to achieve better performance.
 
-Shadowsocks-js has been tested in osx and ubuntu 14 but it's also expected to work in
-windows.
-
 ## Installation
-
-```
-$ npm i -g shadowsocks-js
-```
 
 ## CLI
 
@@ -136,7 +129,7 @@ Specify your config file with `-c` flag:
 $ serverssjs -c config.json
 ```
 
-You can change default config in `config.json` file of your global shadowsocks-js
+You can change default config in `config.json` file of your global
 package.
 
 ## SOCKS5 Username Password Authetication
@@ -156,7 +149,7 @@ Add `auth` property to your `config.json` and make `forceAuth` `true`.
 }
 ```
 
-## [Optimizing Shadowsocks](https://github.com/Long-live-shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
+## [Optimizing](https://github.com/Long-live-shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
 
 ## Encryption methods
 
@@ -189,7 +182,7 @@ $ npm run watch
 
 ## About the support to UDP relay
 
-I intend to implement UDP relay and I have implement it in shadowsocks-js
+I intend to implement UDP relay and I have implement it.
 but I can't find an effective way to test this in real world networking.
 Please create issues to help us if you know any applications that support
 UDP-socks well.

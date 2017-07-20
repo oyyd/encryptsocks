@@ -168,7 +168,7 @@ export function getDstInfo(data, isServer) {
   // +----+-----+-------+------+----------+----------+
   // | 1  |  1  | X'00' |  1   | Variable |    2     |
   // +----+-----+-------+------+----------+----------+
-  // Yet shadowsocks begin with ATYP.
+  // Yet begin with ATYP.
 
   const offset = isServer ? 0 : 3;
   return parseDstInfo(data, offset);

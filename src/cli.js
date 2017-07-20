@@ -15,7 +15,7 @@ function logHelp(invalidOption) {
   log(
 // eslint-disable-next-line
 `
-${(invalidOption ? `${invalidOption}\n` : '')}shadowsocks-js ${version}
+${(invalidOption ? `${invalidOption}\n` : '')}encryptsocks ${version}
 You can supply configurations via either config file or command line arguments.
 
 Proxy options:

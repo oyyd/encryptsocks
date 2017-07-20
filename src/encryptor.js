@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 const hasOwnProperty = {}.hasOwnProperty;
 
-// directly exported from shadowsocks-nodejs
+// directly exported from the original nodejs implementation
 const cryptoParamLength = {
   'aes-128-cfb': [16, 16],
   'aes-192-cfb': [24, 16],

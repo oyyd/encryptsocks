@@ -1,10 +1,8 @@
 {
-  "name": "shadowsocks-js",
+  "name": "encryptsocks",
   "version": "1.4.1",
-  "description": "Yet another shadowsocks implementation for nodejs to help you bypass firewalls.",
+  "description": "Encrypt your socks transmission.",
   "keywords": [
-    "shadowsocks",
-    "ss",
     "SOCKS5",
     "firewall",
     "http_proxy"

@@ -18,21 +18,21 @@ import * as encryptor from './encryptor';
 // | 2  |  1   |  1   | Variable |    2     | Variable |
 // +----+------+------+----------+----------+----------+
 //
-// shadowsocks UDP Request (before encrypted)
+// UDP Request (before encrypted)
 // +------+----------+----------+----------+
 // | ATYP | DST.ADDR | DST.PORT |   DATA   |
 // +------+----------+----------+----------+
 // |  1   | Variable |    2     | Variable |
 // +------+----------+----------+----------+
 //
-// shadowsocks UDP Response (before encrypted)
+// UDP Response (before encrypted)
 // +------+----------+----------+----------+
 // | ATYP | DST.ADDR | DST.PORT |   DATA   |
 // +------+----------+----------+----------+
 // |  1   | Variable |    2     | Variable |
 // +------+----------+----------+----------+
 //
-// shadowsocks UDP Request and Response (after encrypted)
+// UDP Request and Response (after encrypted)
 // +-------+--------------+
 // |   IV  |    PAYLOAD   |
 // +-------+--------------+
