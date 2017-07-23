@@ -45,6 +45,10 @@ It's recommended to use node v6 to achieve better performance.
 npm i -g encryptsocks
 ```
 
+## About the daemon
+
+Encryptsocks use `pm2` as the watcher process from `1.4.0`.
+
 ## CLI
 
 Use `localssjs` (local ssjs) to start clients to communicate with applications. The `localssjs` server will also serve a [pac](https://en.wikipedia.org/wiki/PAC) file at `http://127.0.0.1:8090` (by default) for your apps to avoid unnecessary tunnel work.

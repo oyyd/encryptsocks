@@ -3,6 +3,7 @@ node_js:
   - "4"
   - "5"
   - "6"
+  - "8"
 script:
   - npm run travis-ci-test
 branches:
