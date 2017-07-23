@@ -1,7 +1,7 @@
 # encryptsocks
 
-[![npm-version](https://img.shields.io/npm/v/shadowsocks-js.svg?style=flat-square)](https://www.npmjs.com/package/shadowsocks-js)
-[![travis-ci build](https://travis-ci.org/oyyd/shadowsocks-js.svg)](https://travis-ci.org/oyyd/shadowsocks-js)
+[![npm-version](https://img.shields.io/npm/v/encryptsocks.svg?style=flat-square)](https://www.npmjs.com/package/encryptsocks)
+[![Build Status](https://travis-ci.org/oyyd/encryptsocks.svg?branch=master)](https://travis-ci.org/oyyd/encryptsocks)
 
 Encrypt your socks transmission.
 
@@ -40,6 +40,10 @@ node >= v4
 It's recommended to use node v6 to achieve better performance.
 
 ## Installation
+
+```
+npm i -g encryptsocks
+```
 
 ## CLI
 

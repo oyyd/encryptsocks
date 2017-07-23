@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## 1.4.1
+## 1.4.2
+
+## 1.4.1@alpha
 
 * Core: Support passing a `proxyOptions` in `pm` instead of creating a config object from `argv`.
 
