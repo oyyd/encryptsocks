@@ -11,6 +11,7 @@ const ssLocal = require('../lib/ssLocal');
 const ssServer = require('../lib/ssServer');
 const utils = require('../lib/utils');
 const _config = require('../lib/defaultConfig.js').default;
+const LOCAL_ONLY = require('./utils').LOCAL_ONLY;
 
 const config = Object.assign({}, _config, {
   'level': 'error',
@@ -147,7 +148,7 @@ describe('http proxy', () => {
     });
   });
 
-  describe('ipv6', () => {
+  describe(LOCAL_ONLY + ' ipv6', () => {
     it('should get correct response through ipv6', function(cb) {
       this.timeout(TIMEOUT);
 
