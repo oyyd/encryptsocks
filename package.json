@@ -1,12 +1,13 @@
 {
   "name": "encryptsocks",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Encrypt your socks transmission.",
   "keywords": [
     "SOCKS5",
     "firewall",
     "http_proxy"
   ],
+  "main": "./lib/index.js",
   "bin": {
     "serverssjs": "./bin/serverssjs",
     "localssjs": "./bin/localssjs"

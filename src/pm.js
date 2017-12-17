@@ -100,16 +100,17 @@ function getPM2Config(type, extralProxyOptions) {
 }
 
 function _start(type, extralProxyOptions) {
-  return getPM2Config(type, extralProxyOptions).then(({ pm2Config }) => new Promise((resolve) => {
-    pm2.start(pm2Config, (err, apps) => {
-      if (err) {
-        throw err;
-      }
+  return getPM2Config(type, extralProxyOptions)
+    .then(({ pm2Config }) => new Promise((resolve) => {
+      pm2.start(pm2Config, (err, apps) => {
+        if (err) {
+          throw err;
+        }
 
-      log('start');
-      resolve(apps);
-    });
-  }))
+        log('start');
+        resolve(apps);
+      });
+    }))
     .then(() => disconnect());
 }
 
@@ -136,7 +137,8 @@ function getRunningInfo(name) {
 function _stop(type, extralProxyOptions) {
   let config = null;
 
-  return getPM2Config(type, extralProxyOptions).then((conf) => {
+  return getPM2Config(type, extralProxyOptions)
+  .then((conf) => {
     config = conf;
     const { name } = config.pm2Config;
     return getRunningInfo(name);

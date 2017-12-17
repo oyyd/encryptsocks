@@ -200,10 +200,15 @@ function handleConnection(config, connection) {
 }
 
 function createServer(config) {
-  const { serverAddr } = config;
+  const { serverAddr, udpActive = true } = config;
   const server = _createServer(handleConnection.bind(null, config))
     .listen(config.serverPort, serverAddr);
-  const udpRelay = createUDPRelay(config, true, logger);
+
+  let udpRelay = null;
+
+  if (udpActive) {
+    udpRelay = createUDPRelay(config, true, logger);
+  }
 
   server.on('close', () => {
     logger.warn(`${NAME} server closed`);
@@ -221,8 +226,9 @@ function createServer(config) {
 }
 
 // eslint-disable-next-line
-export function startServer(config, willLogToConsole = false) {
-  logger = logger || createLogger(config, LOG_NAMES.SERVER, willLogToConsole);
+export function startServer(config, willLogToConsole = false, injectedLogger) {
+  logger = logger || injectedLogger
+    || createLogger(config, LOG_NAMES.SERVER, willLogToConsole);
 
   return createServer(config);
 }
