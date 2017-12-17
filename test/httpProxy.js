@@ -23,7 +23,7 @@ const DST_ADDR = testServer.DST_ADDR;
 const DST_PORT = testServer.DST_PORT;
 const createHTTPServer = testServer.createHTTPServer;
 
-const TIMEOUT = 5000;
+const TIMEOUT = 30000;
 
 describe('getDstInfo', () => {
 
@@ -82,7 +82,7 @@ describe('http proxy', () => {
   let ssServerServer;
 
   before(function(cb) {
-    this.timeout(5000);
+    this.timeout(TIMEOUT);
     ssLocalServer = ssLocal.startServer(config);
     ssServerServer = ssServer.startServer(config);
     dstServer = createHTTPServer(cb);

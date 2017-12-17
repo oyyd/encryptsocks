@@ -13,7 +13,11 @@ let logger;
 
 function createClientToDst(
   connection, data,
-  password, method, onConnect, onDestroy, isLocalConnected
+  password, method,
+  onConnect,
+  onDestroy,
+  isLocalConnected,
+  connectFunc = connect,
 ) {
   const dstInfo = getDstInfo(data, true);
 
@@ -38,7 +42,7 @@ function createClientToDst(
     preservedData = data.slice(dstInfo.totalLength);
   }
 
-  const clientToDst = connect(clientOptions, onConnect);
+  const clientToDst = connectFunc(clientOptions, onConnect, data.slice(0, dstInfo.totalLength));
 
   clientToDst.on('data', (clientData) => {
     if (!cipher) {
@@ -116,8 +120,10 @@ function handleConnection(config, connection) {
         connection.pause();
 
         tmp = createClientToDst(
-          connection, data,
-          config.password, config.method,
+          connection,
+          data,
+          config.password,
+          config.method,
           () => {
             dstConnected = true;
             connection.resume();
@@ -133,7 +139,8 @@ function handleConnection(config, connection) {
               connection.destroy();
             }
           },
-          () => localConnected
+          () => localConnected,
+          config.connect
         );
 
         if (!tmp) {
