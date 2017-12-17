@@ -17,7 +17,7 @@ function createClientToDst(
   onConnect,
   onDestroy,
   isLocalConnected,
-  connectFunc = connect,
+  connectFunc,
 ) {
   const dstInfo = getDstInfo(data, true);
 
@@ -42,7 +42,13 @@ function createClientToDst(
     preservedData = data.slice(dstInfo.totalLength);
   }
 
-  const clientToDst = connectFunc(clientOptions, onConnect, data.slice(0, dstInfo.totalLength));
+  let clientToDst = null;
+
+  if (connectFunc) {
+    clientToDst = connectFunc(clientOptions, onConnect, data.slice(0, dstInfo.totalLength));
+  } else {
+    clientToDst = connect(clientOptions, onConnect);
+  }
 
   clientToDst.on('data', (clientData) => {
     if (!cipher) {

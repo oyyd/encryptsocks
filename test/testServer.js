@@ -8,7 +8,7 @@ const ip = require('ip');
 const config = require('../lib/defaultConfig.js').default;
 
 const DST_RES_TEXT = 'hello world!';
-const DST_ADDR = '0.0.0.0';
+const DST_ADDR = '127.0.0.1';
 const DST_ADDR_IPV6 = '::1';
 const DST_PORT = 42134;
 const SOCKS_PORT = config.localPort;
